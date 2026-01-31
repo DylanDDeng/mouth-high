@@ -11,9 +11,11 @@ function RecordingBarWindow() {
 
   // 监听真实音频振幅数据
   useEffect(() => {
+    console.log("RecordingBarWindow mounted, setting up amplitude listener");
+    
     const setupListener = async () => {
       const unlisten = await listen<number>("audio-amplitude", (event) => {
-        // 接收到的振幅值是 0-1 范围
+        console.log("Received audio amplitude:", event.payload);
         targetAmplitudeRef.current = event.payload;
       });
       return unlisten;

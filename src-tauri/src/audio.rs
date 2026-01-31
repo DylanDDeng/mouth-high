@@ -159,6 +159,7 @@ fn create_input_stream_with_amplitude(
                                         
                                         if let Some(ref handle) = app_handle {
                                             let _ = handle.emit("audio-amplitude", normalized);
+                                            log::debug!("Audio amplitude: {:.3}", normalized);
                                         }
                                     }
                                 }
