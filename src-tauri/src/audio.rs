@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::thread::{self, JoinHandle};
 use tempfile::NamedTempFile;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 pub enum RecorderCommand {
     Start(Option<AppHandle>), // 可选的 AppHandle 用于发送实时音频数据
@@ -158,7 +158,10 @@ fn create_input_stream_with_amplitude(
                                         let normalized = (amplitude * 5.0).min(1.0);
                                         
                                         if let Some(ref handle) = app_handle {
-                                            let _ = handle.emit("audio-amplitude", normalized);
+                                            // 尝试发送到 recording-bar 窗口
+                                            if let Some(window) = handle.get_webview_window("recording-bar") {
+                                                let _ = window.emit("audio-amplitude", normalized);
+                                            }
                                             log::debug!("Audio amplitude: {:.3}", normalized);
                                         }
                                     }
