@@ -1,4 +1,5 @@
 mod audio;
+mod focus;
 mod hotkey;
 mod input;
 mod sidecar;
@@ -82,6 +83,7 @@ pub struct AppState {
     pub is_recording: Mutex<bool>,
     pub recording_mode: Mutex<RecordingMode>,
     pub sidecar_manager: Mutex<Option<sidecar::SidecarManager>>,
+    pub previous_app: Mutex<Option<String>>,
 }
 
 // 快捷键配置
@@ -576,6 +578,7 @@ pub fn run() {
             is_recording: Mutex::new(false),
             recording_mode: Mutex::new(RecordingMode::default()),
             sidecar_manager: Mutex::new(None),
+            previous_app: Mutex::new(None),
         })
         .setup(|app| {
             let handle = app.handle().clone();

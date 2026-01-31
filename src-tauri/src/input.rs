@@ -16,7 +16,7 @@ fn simulate_keyboard_input(text: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to create Enigo instance: {}", e))?;
 
     // Small delay to ensure focus is correct
-    thread::sleep(Duration::from_millis(50));
+    thread::sleep(Duration::from_millis(100));
 
     // Type the text
     enigo
@@ -44,7 +44,7 @@ fn copy_to_clipboard_and_paste(text: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to create Enigo instance: {}", e))?;
 
     // Small delay
-    thread::sleep(Duration::from_millis(50));
+    thread::sleep(Duration::from_millis(100));
 
     // Press Cmd+V
     enigo

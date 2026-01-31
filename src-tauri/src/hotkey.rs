@@ -274,8 +274,15 @@ fn start_recording(app: &AppHandle) {
                 mode
             };
 
-            // Toggle 模式下显示浮动波纹条窗口
+            // Toggle 模式下，保存当前焦点应用，然后显示浮动波纹条窗口
             if recording_mode == crate::RecordingMode::Toggle {
+                // 保存当前焦点应用
+                if let Some(bundle_id) = crate::focus::get_frontmost_app() {
+                    let mut prev = state.previous_app.lock().unwrap();
+                    *prev = Some(bundle_id.clone());
+                    log::info!("Saved previous app: {}", bundle_id);
+                }
+
                 if let Some(window) = app.get_webview_window("recording-bar") {
                     let _ = window.center();
                     let _ = window.show();
@@ -327,6 +334,25 @@ fn stop_recording_and_process(app: &AppHandle) {
     {
         let mut is_recording = state.is_recording.lock().unwrap();
         *is_recording = false;
+    }
+
+    // 获取录音模式
+    let recording_mode = {
+        let mode = *state.recording_mode.lock().unwrap();
+        mode
+    };
+
+    // Toggle 模式下，先恢复焦点到之前的应用
+    if recording_mode == crate::RecordingMode::Toggle {
+        let prev = state.previous_app.lock().unwrap();
+        if let Some(ref bundle_id) = *prev {
+            log::info!("Restoring focus to: {}", bundle_id);
+            if let Err(e) = crate::focus::activate_app(bundle_id) {
+                log::warn!("Failed to restore focus: {}", e);
+            }
+            // 给系统时间完成焦点切换
+            std::thread::sleep(std::time::Duration::from_millis(150));
+        }
     }
 
     // 隐藏浮动波纹条窗口

@@ -26,8 +26,8 @@
       {
         "title": "Recording",
         "label": "recording-bar",
-        "width": 400,
-        "height": 80,
+        "width": 320,
+        "height": 70,
         "visible": false,
         "resizable": false,
         "fullscreen": false,

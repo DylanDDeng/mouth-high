@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Mic, Square } from "lucide-react";
 
 function RecordingBarWindow() {
-  const [waveform, setWaveform] = useState<number[]>(new Array(40).fill(0.3));
+  const [waveform, setWaveform] = useState<number[]>(new Array(32).fill(0.3));
   const animationRef = useRef<number | null>(null);
 
   // 模拟波形动画
