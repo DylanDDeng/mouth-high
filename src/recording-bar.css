@@ -1,4 +1,4 @@
-/* 录音波纹条浮动窗口样式 - Typeless 风格 */
+/* 录音波纹条 - Cursor 极简风格 */
 
 .recording-bar-float {
   width: 100%;
@@ -6,94 +6,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  /* 添加整体动画 */
-  animation: barFadeIn 0.3s ease;
+  animation: barAppear 0.25s ease;
 }
 
-@keyframes barFadeIn {
+@keyframes barAppear {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateY(10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 .recording-bar-content {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 10px 20px;
-  /* 深色半透明背景 */
-  background: rgba(40, 40, 40, 0.92);
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(30, 30, 30, 0.98);
   border-radius: 50px;
-  box-shadow: 
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-/* 麦克风图标 - 红色呼吸效果 */
-.recording-bar-mic {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #ff4444 0%, #ff6666 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-  animation: micPulse 2s infinite;
-  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
-}
-
-@keyframes micPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 4px 16px rgba(255, 68, 68, 0.6);
-  }
-}
-
-/* 波形容器 */
-.waveform-bars {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2.5px;
+/* 取消按钮 - 灰色圆形 */
+.recording-cancel-btn {
+  width: 36px;
   height: 36px;
-  min-width: 140px;
-  padding: 0 8px;
-}
-
-/* 波形条 - Typeless 风格 */
-.waveform-bar {
-  width: 3px;
-  /* 蓝色渐变 */
-  background: linear-gradient(to top, #4a9eff 0%, #6bb3ff 50%, #4a9eff 100%);
-  border-radius: 1.5px;
-  min-height: 3px;
-  max-height: 100%;
-  transition: height 0.08s ease-out;
-  opacity: 0.9;
-}
-
-/* 停止按钮 - 白色简洁风格 */
-.recording-stop-btn {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   border-radius: 50%;
-  color: #333;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -102,17 +46,51 @@
   flex-shrink: 0;
 }
 
-.recording-stop-btn:hover {
-  background: #fff;
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+.recording-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  transform: scale(1.05);
 }
 
-/* 提示文字 */
-.recording-hint-text {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
-  white-space: nowrap;
-  font-weight: 400;
-  letter-spacing: 0.3px;
+/* 波形区域 */
+.waveform-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 32px;
+  min-width: 100px;
+  padding: 0 4px;
+}
+
+/* 波形条 - 白色极简 */
+.waveform-bar {
+  width: 3px;
+  background: white;
+  border-radius: 1.5px;
+  min-height: 4px;
+  max-height: 100%;
+  transition: height 0.08s ease-out;
+  opacity: 0.9;
+}
+
+/* 确认按钮 - 白色圆形 */
+.recording-confirm-btn {
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.recording-confirm-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }

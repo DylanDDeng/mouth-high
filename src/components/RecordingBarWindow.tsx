@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Mic, Square } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 function RecordingBarWindow() {
-  const [waveform, setWaveform] = useState<number[]>(new Array(32).fill(0.3));
+  const [waveform, setWaveform] = useState<number[]>(new Array(16).fill(0.4));
   const animationRef = useRef<number | null>(null);
 
-  // 模拟波形动画
+  // 波形动画
   useEffect(() => {
     const animate = () => {
       setWaveform((prev) => {
         const newWaveform = [...prev];
         for (let i = 0; i < newWaveform.length; i++) {
-          const targetHeight = 0.2 + Math.random() * 0.8;
-          newWaveform[i] = newWaveform[i] * 0.7 + targetHeight * 0.3;
+          const targetHeight = 0.2 + Math.random() * 0.9;
+          newWaveform[i] = newWaveform[i] * 0.6 + targetHeight * 0.4;
         }
         return newWaveform;
       });
@@ -29,7 +29,17 @@ function RecordingBarWindow() {
     };
   }, []);
 
-  const handleStop = async () => {
+  // 取消录音
+  const handleCancel = async () => {
+    try {
+      await invoke("stop_recording");
+    } catch (error) {
+      console.error("Failed to stop recording:", error);
+    }
+  };
+
+  // 确认完成
+  const handleConfirm = async () => {
     try {
       await invoke("stop_recording");
     } catch (error) {
@@ -40,10 +50,14 @@ function RecordingBarWindow() {
   return (
     <div className="recording-bar-float">
       <div className="recording-bar-content">
-        {/* 麦克风图标 */}
-        <div className="recording-bar-mic">
-          <Mic size={20} />
-        </div>
+        {/* 取消按钮 */}
+        <button
+          className="recording-cancel-btn"
+          onClick={handleCancel}
+          title="取消"
+        >
+          <X size={18} strokeWidth={2.5} />
+        </button>
 
         {/* 波形区域 */}
         <div className="waveform-bars">
@@ -53,23 +67,19 @@ function RecordingBarWindow() {
               className="waveform-bar"
               style={{
                 height: `${height * 100}%`,
-                opacity: 0.4 + height * 0.6,
               }}
             />
           ))}
         </div>
 
-        {/* 停止按钮 */}
+        {/* 确认按钮 */}
         <button
-          className="recording-stop-btn"
-          onClick={handleStop}
-          title="点击完成录音"
+          className="recording-confirm-btn"
+          onClick={handleConfirm}
+          title="完成"
         >
-          <Square size={16} fill="currentColor" />
+          <Check size={18} strokeWidth={2.5} />
         </button>
-
-        {/* 提示文字 */}
-        <span className="recording-hint-text">点击完成</span>
       </div>
     </div>
   );
