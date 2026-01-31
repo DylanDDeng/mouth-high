@@ -3,7 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { 
   Key, Keyboard, Globe, Check, ChevronRight, 
-  Command, Zap, Star, Info, ArrowLeft, Mic
+  Command, Zap, Star, Info, ArrowLeft, Mic, ToggleLeft, Hand
 } from "lucide-react";
 
 interface SettingsPageProps {
@@ -71,6 +71,9 @@ function SettingsPage({ onBack }: SettingsPageProps) {
   // 输出方式
   const [outputMode, setOutputMode] = useState<"keyboard" | "clipboard">("keyboard");
 
+  // 录音模式
+  const [recordingMode, setRecordingMode] = useState<"hold" | "toggle">("hold");
+
   useEffect(() => {
     setIsMac(navigator.platform.toLowerCase().includes("mac"));
     
@@ -88,6 +91,10 @@ function SettingsPage({ onBack }: SettingsPageProps) {
         // 加载输出方式
         const mode = await invoke<"keyboard" | "clipboard">("get_output_mode");
         setOutputMode(mode);
+        
+        // 加载录音模式
+        const recMode = await invoke<"hold" | "toggle">("get_recording_mode");
+        setRecordingMode(recMode);
       } catch (e) {
         console.error("Failed to load configs:", e);
       }
@@ -146,6 +153,15 @@ function SettingsPage({ onBack }: SettingsPageProps) {
       await invoke("set_output_mode", { mode });
     } catch (error) {
       console.error("Failed to set output mode:", error);
+    }
+  };
+
+  const handleRecordingModeChange = async (mode: "hold" | "toggle") => {
+    setRecordingMode(mode);
+    try {
+      await invoke("set_recording_mode", { mode });
+    } catch (error) {
+      console.error("Failed to set recording mode:", error);
     }
   };
 
@@ -231,7 +247,7 @@ function SettingsPage({ onBack }: SettingsPageProps) {
             </div>
             <div>
               <h2>快捷键设置</h2>
-              <p className="section-desc">按住快捷键说话，松开后自动识别</p>
+              <p className="section-desc">自定义您的语音输入快捷键</p>
             </div>
           </div>
 
@@ -400,6 +416,39 @@ function SettingsPage({ onBack }: SettingsPageProps) {
                   </div>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* 录音模式 */}
+          <section className="settings-subsection">
+            <div className="subsection-header">
+              <ToggleLeft size={18} />
+              <h3>录音模式</h3>
+            </div>
+            
+            <div className="mini-card">
+              <div className="output-options">
+                <button
+                  className={`output-option ${recordingMode === "hold" ? "active" : ""}`}
+                  onClick={() => handleRecordingModeChange("hold")}
+                >
+                  <div className="option-content">
+                    <span className="option-name">按住模式</span>
+                    <span className="option-desc">按住快捷键录音，松开自动停止</span>
+                  </div>
+                  {recordingMode === "hold" && <Check size={16} />}
+                </button>
+                <button
+                  className={`output-option ${recordingMode === "toggle" ? "active" : ""}`}
+                  onClick={() => handleRecordingModeChange("toggle")}
+                >
+                  <div className="option-content">
+                    <span className="option-name">切换模式</span>
+                    <span className="option-desc">按一下开始录音，再按一下或点击指示器停止</span>
+                  </div>
+                  {recordingMode === "toggle" && <Check size={16} />}
+                </button>
+              </div>
             </div>
           </section>
 

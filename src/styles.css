@@ -2370,3 +2370,71 @@ body {
     background: rgba(166, 139, 106, 0.15);
   }
 }
+
+/* 录音指示器 */
+.recording-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  cursor: pointer;
+  animation: slideIn 0.3s ease;
+}
+
+.recording-indicator-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+  color: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 16px rgba(255, 68, 68, 0.35);
+  font-weight: 500;
+  font-size: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recording-indicator:hover .recording-indicator-inner {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 68, 68, 0.45);
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.recording-stop-icon {
+  margin-left: 4px;
+  opacity: 0.9;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

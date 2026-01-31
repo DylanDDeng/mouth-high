@@ -170,17 +170,45 @@ fn register_hotkey_with_config(app: &AppHandle, config: &HotkeyConfig) -> Result
     let handle = app.clone();
 
     // on_shortcut() 同时完成：注册快捷键 + 绑定处理器
-    // 注意：不要再调用 register()，否则会导致重复注册错误
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
-            match event.state {
-                ShortcutState::Pressed => {
-                    log::info!("Hotkey pressed - starting recording");
-                    start_recording(&handle);
+            let recording_mode = {
+                let state = handle.state::<crate::AppState>();
+                let mode = *state.recording_mode.lock().unwrap();
+                mode
+            };
+
+            match recording_mode {
+                crate::RecordingMode::Hold => {
+                    // Hold 模式：按住开始，松开停止
+                    match event.state {
+                        ShortcutState::Pressed => {
+                            log::info!("Hotkey pressed (Hold mode) - starting recording");
+                            start_recording(&handle);
+                        }
+                        ShortcutState::Released => {
+                            log::info!("Hotkey released (Hold mode) - stopping recording");
+                            stop_recording_and_process(&handle);
+                        }
+                    }
                 }
-                ShortcutState::Released => {
-                    log::info!("Hotkey released - stopping recording");
-                    stop_recording_and_process(&handle);
+                crate::RecordingMode::Toggle => {
+                    // Toggle 模式：按一下切换录音状态
+                    if matches!(event.state, ShortcutState::Pressed) {
+                        let is_recording = {
+                            let state = handle.state::<crate::AppState>();
+                            let is_rec = *state.is_recording.lock().unwrap();
+                            is_rec
+                        };
+                        
+                        if is_recording {
+                            log::info!("Hotkey pressed (Toggle mode) - stopping recording");
+                            stop_recording_and_process(&handle);
+                        } else {
+                            log::info!("Hotkey pressed (Toggle mode) - starting recording");
+                            start_recording(&handle);
+                        }
+                    }
                 }
             }
         })
@@ -349,4 +377,20 @@ fn process_audio(app: &AppHandle, audio_path: std::path::PathBuf) {
     if let Err(e) = std::fs::remove_file(&audio_path) {
         log::warn!("Failed to remove temp audio file: {}", e);
     }
+}
+
+// 公共函数：停止录音（供前端调用）
+pub fn stop_recording_manually(app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<crate::AppState>();
+    
+    // Check if recording
+    {
+        let is_recording = state.is_recording.lock().unwrap();
+        if !*is_recording {
+            return Err("Not recording".to_string());
+        }
+    }
+    
+    stop_recording_and_process(app);
+    Ok(())
 }

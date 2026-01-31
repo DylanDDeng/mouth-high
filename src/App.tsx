@@ -5,7 +5,7 @@ import Status from "./components/Status";
 import Settings from "./components/Settings";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
-import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles, StopCircle } from "lucide-react";
 
 type AppStatus = "idle" | "recording" | "processing";
 type NavItem = "home" | "history" | "dictionary" | "settings";
@@ -26,6 +26,8 @@ interface HotkeyConfig {
   key: string;
 }
 
+type RecordingMode = "hold" | "toggle";
+
 function App() {
   const [status, setStatus] = useState<AppStatus>("idle");
   const [transcript, setTranscript] = useState<string>("");
@@ -37,6 +39,7 @@ function App() {
     total_transcriptions: 0,
   });
   const [hotkey, setHotkey] = useState<string>("Ctrl + Shift + R");
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>("hold");
 
   useEffect(() => {
     const isMac = navigator.platform.toLowerCase().includes("mac");
@@ -76,7 +79,18 @@ function App() {
         }
       };
 
+      // 获取录音模式
+      const loadRecordingMode = async () => {
+        try {
+          const mode = await invoke<RecordingMode>("get_recording_mode");
+          setRecordingMode(mode);
+        } catch (e) {
+          console.error("Failed to load recording mode:", e);
+        }
+      };
+
       loadHotkeyConfig();
+      loadRecordingMode();
 
       return () => {
         unlistenRecording();
@@ -127,6 +141,15 @@ function App() {
     }
   };
 
+  // 停止录音（用于 Toggle 模式）
+  const handleStopRecording = async () => {
+    try {
+      await invoke("stop_recording");
+    } catch (error) {
+      console.error("Failed to stop recording:", error);
+    }
+  };
+
   const navItems: { id: NavItem; label: string; icon: React.ReactNode }[] = [
     { id: "home", label: "首页", icon: <Mic size={18} /> },
     { id: "history", label: "历史记录", icon: <Clock size={18} /> },
@@ -142,7 +165,10 @@ function App() {
         <div className="header-text">
           <h1>自然说话，完美写作</h1>
           <p className="header-desc">
-            按住 <kbd>{hotkey}</kbd> 说话，松开后自动将语音转换为文字
+            {recordingMode === "hold" 
+              ? <>按住 <kbd>{hotkey}</kbd> 说话，松开后自动将语音转换为文字</>
+              : <>按 <kbd>{hotkey}</kbd> 开始录音，点击指示器或再按一次停止</>
+            }
           </p>
         </div>
       </header>
@@ -270,6 +296,17 @@ function App() {
           </button>
         </div>
       </aside>
+
+      {/* 录音指示器（Toggle 模式下显示） */}
+      {status === "recording" && recordingMode === "toggle" && (
+        <div className="recording-indicator" onClick={handleStopRecording}>
+          <div className="recording-indicator-inner">
+            <span className="recording-dot"></span>
+            <span className="recording-text">正在录音</span>
+            <StopCircle size={20} className="recording-stop-icon" />
+          </div>
+        </div>
+      )}
 
       {/* 主内容区 */}
       <main className="main-content">

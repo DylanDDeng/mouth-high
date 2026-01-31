@@ -47,12 +47,6 @@ impl Default for HistoryRetention {
     }
 }
 
-pub struct AppState {
-    pub output_mode: Mutex<OutputMode>,
-    pub is_recording: Mutex<bool>,
-    pub sidecar_manager: Mutex<Option<sidecar::SidecarManager>>,
-}
-
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub enum OutputMode {
     #[serde(rename = "keyboard")]
@@ -65,6 +59,28 @@ impl Default for OutputMode {
     fn default() -> Self {
         OutputMode::Keyboard
     }
+}
+
+// 录音模式
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+pub enum RecordingMode {
+    #[serde(rename = "hold")]
+    Hold,    // 按住录音，松开停止
+    #[serde(rename = "toggle")]
+    Toggle,  // 按一下开始，再按一下停止
+}
+
+impl Default for RecordingMode {
+    fn default() -> Self {
+        RecordingMode::Hold
+    }
+}
+
+pub struct AppState {
+    pub output_mode: Mutex<OutputMode>,
+    pub is_recording: Mutex<bool>,
+    pub recording_mode: Mutex<RecordingMode>,
+    pub sidecar_manager: Mutex<Option<sidecar::SidecarManager>>,
 }
 
 // 快捷键配置
@@ -103,6 +119,25 @@ fn set_output_mode(state: tauri::State<'_, AppState>, mode: OutputMode) -> Resul
 fn get_output_mode(state: tauri::State<'_, AppState>) -> Result<OutputMode, String> {
     let output_mode = state.output_mode.lock().map_err(|e| e.to_string())?;
     Ok(*output_mode)
+}
+
+#[tauri::command]
+fn get_recording_mode(state: tauri::State<'_, AppState>) -> Result<RecordingMode, String> {
+    let recording_mode = state.recording_mode.lock().map_err(|e| e.to_string())?;
+    Ok(*recording_mode)
+}
+
+#[tauri::command]
+fn set_recording_mode(state: tauri::State<'_, AppState>, mode: RecordingMode) -> Result<(), String> {
+    let mut recording_mode = state.recording_mode.lock().map_err(|e| e.to_string())?;
+    *recording_mode = mode;
+    log::info!("Recording mode set to: {:?}", mode);
+    Ok(())
+}
+
+#[tauri::command]
+fn stop_recording(app_handle: tauri::AppHandle) -> Result<(), String> {
+    hotkey::stop_recording_manually(&app_handle)
 }
 
 fn get_config_path() -> PathBuf {
@@ -534,6 +569,7 @@ pub fn run() {
         .manage(AppState {
             output_mode: Mutex::new(OutputMode::default()),
             is_recording: Mutex::new(false),
+            recording_mode: Mutex::new(RecordingMode::default()),
             sidecar_manager: Mutex::new(None),
         })
         .setup(|app| {
@@ -553,6 +589,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
                 set_output_mode, get_output_mode, 
+                get_recording_mode, set_recording_mode, stop_recording,
                 get_api_key, set_api_key, is_api_key_configured, get_usage_stats,
                 get_hotkey_config, set_hotkey_config, update_hotkey,
                 get_history, delete_history_item, clear_history,
