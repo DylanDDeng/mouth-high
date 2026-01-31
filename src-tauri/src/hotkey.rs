@@ -268,6 +268,12 @@ fn start_recording(app: &AppHandle) {
                 *is_recording = true;
             }
 
+            // 显示窗口并置顶（用于 Toggle 模式显示录音波纹条）
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_always_on_top(true);
+            }
+
             let _ = app.emit("recording-started", ());
             log::info!("Recording started");
         }
@@ -312,6 +318,11 @@ fn stop_recording_and_process(app: &AppHandle) {
     {
         let mut is_recording = state.is_recording.lock().unwrap();
         *is_recording = false;
+    }
+
+    // 取消窗口置顶
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_always_on_top(false);
     }
 
     // Process audio if we have it
