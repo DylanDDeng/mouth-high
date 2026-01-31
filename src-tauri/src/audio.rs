@@ -5,9 +5,10 @@ use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::thread::{self, JoinHandle};
 use tempfile::NamedTempFile;
+use tauri::{AppHandle, Emitter};
 
 pub enum RecorderCommand {
-    Start,
+    Start(Option<AppHandle>), // 可选的 AppHandle 用于发送实时音频数据
     Stop(Sender<Result<PathBuf, String>>),
 }
 
@@ -30,9 +31,9 @@ impl AudioRecorderHandle {
         })
     }
 
-    pub fn start_recording(&self) -> Result<(), String> {
+    pub fn start_recording(&self, app_handle: Option<AppHandle>) -> Result<(), String> {
         self.command_tx
-            .send(RecorderCommand::Start)
+            .send(RecorderCommand::Start(app_handle))
             .map_err(|e| format!("Failed to send start command: {}", e))
     }
 
@@ -50,26 +51,28 @@ impl AudioRecorderHandle {
 
 fn recorder_thread(command_rx: Receiver<RecorderCommand>) {
     let samples: Arc<Mutex<Vec<f32>>> = Arc::new(Mutex::new(Vec::new()));
-    // Stream is kept alive here to maintain recording; dropping it stops recording
     let mut _stream_holder: Option<cpal::Stream> = None;
     let mut sample_rate: u32 = 44100;
 
     loop {
         match command_rx.recv() {
-            Ok(RecorderCommand::Start) => {
+            Ok(RecorderCommand::Start(handle)) => {
                 // Clear samples
                 if let Ok(mut s) = samples.lock() {
                     s.clear();
                 }
 
-                // Create stream
-                match create_input_stream(Arc::clone(&samples)) {
+                // Create stream with amplitude monitoring
+                match create_input_stream_with_amplitude(
+                    Arc::clone(&samples),
+                    handle.clone(),
+                ) {
                     Ok((stream, rate)) => {
                         sample_rate = rate;
                         if let Err(e) = stream.play() {
                             log::error!("Failed to start stream: {}", e);
                         } else {
-                            log::info!("Recording started at {} Hz", sample_rate);
+                            log::info!("Recording started at {} Hz with amplitude monitoring", sample_rate);
                             _stream_holder = Some(stream);
                         }
                     }
@@ -87,15 +90,15 @@ fn recorder_thread(command_rx: Receiver<RecorderCommand>) {
                 let _ = result_tx.send(result);
             }
             Err(_) => {
-                // Channel closed, exit thread
                 break;
             }
         }
     }
 }
 
-fn create_input_stream(
+fn create_input_stream_with_amplitude(
     samples: Arc<Mutex<Vec<f32>>>,
+    app_handle: Option<AppHandle>,
 ) -> Result<(cpal::Stream, u32), String> {
     let host = cpal::default_host();
     let device = host
@@ -109,14 +112,60 @@ fn create_input_stream(
     let sample_rate = config.sample_rate().0;
     let err_fn = |err| log::error!("Audio stream error: {}", err);
 
+    // 用于计算音量的变量
+    let amplitude_counter = Arc::new(Mutex::new(0u64));
+    let amplitude_sum = Arc::new(Mutex::new(0.0f32));
+    let last_emit_time = Arc::new(Mutex::new(std::time::Instant::now()));
+
     let stream = match config.sample_format() {
         cpal::SampleFormat::F32 => {
+            let samples_clone = Arc::clone(&samples);
+            let amp_counter_clone = Arc::clone(&amplitude_counter);
+            let amp_sum_clone = Arc::clone(&amplitude_sum);
+            let last_emit_clone = Arc::clone(&last_emit_time);
+            
             device
                 .build_input_stream(
                     &config.into(),
                     move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                        if let Ok(mut s) = samples.lock() {
+                        // 存储样本
+                        if let Ok(mut s) = samples_clone.lock() {
                             s.extend_from_slice(data);
+                        }
+                        
+                        // 计算音量
+                        let mut sum = 0.0f32;
+                        for &sample in data {
+                            sum += sample.abs();
+                        }
+                        let avg = sum / data.len() as f32;
+                        
+                        // 累积音量数据
+                        if let Ok(mut counter) = amp_counter_clone.lock() {
+                            *counter += data.len() as u64;
+                        }
+                        if let Ok(mut sum_val) = amp_sum_clone.lock() {
+                            *sum_val += avg * data.len() as f32;
+                        }
+                        
+                        // 每 50ms 发送一次音量数据
+                        if let Ok(mut last_time) = last_emit_clone.lock() {
+                            if last_time.elapsed().as_millis() >= 50 {
+                                if let (Ok(counter), Ok(sum_val)) = (amp_counter_clone.lock(), amp_sum_clone.lock()) {
+                                    if *counter > 0 {
+                                        let amplitude = *sum_val / *counter as f32;
+                                        // 归一化到 0-1 范围，并增强效果
+                                        let normalized = (amplitude * 5.0).min(1.0);
+                                        
+                                        if let Some(ref handle) = app_handle {
+                                            let _ = handle.emit("audio-amplitude", normalized);
+                                        }
+                                    }
+                                }
+                                *last_time = std::time::Instant::now();
+                                if let Ok(mut c) = amp_counter_clone.lock() { *c = 0; }
+                                if let Ok(mut s) = amp_sum_clone.lock() { *s = 0.0; }
+                            }
                         }
                     },
                     err_fn,
@@ -125,16 +174,54 @@ fn create_input_stream(
                 .map_err(|e| format!("Failed to build input stream: {}", e))?
         }
         cpal::SampleFormat::I16 => {
+            let samples_clone = Arc::clone(&samples);
+            let amp_counter_clone = Arc::clone(&amplitude_counter);
+            let amp_sum_clone = Arc::clone(&amplitude_sum);
+            let last_emit_clone = Arc::clone(&last_emit_time);
+            
             device
                 .build_input_stream(
                     &config.into(),
                     move |data: &[i16], _: &cpal::InputCallbackInfo| {
-                        if let Ok(mut s) = samples.lock() {
+                        // 存储样本
+                        if let Ok(mut s) = samples_clone.lock() {
                             let floats: Vec<f32> = data
                                 .iter()
                                 .map(|&sample| sample as f32 / i16::MAX as f32)
                                 .collect();
                             s.extend(floats);
+                        }
+                        
+                        // 计算音量
+                        let mut sum = 0.0f32;
+                        for &sample in data {
+                            sum += (sample as f32 / i16::MAX as f32).abs();
+                        }
+                        let avg = sum / data.len() as f32;
+                        
+                        if let Ok(mut counter) = amp_counter_clone.lock() {
+                            *counter += data.len() as u64;
+                        }
+                        if let Ok(mut sum_val) = amp_sum_clone.lock() {
+                            *sum_val += avg * data.len() as f32;
+                        }
+                        
+                        if let Ok(mut last_time) = last_emit_clone.lock() {
+                            if last_time.elapsed().as_millis() >= 50 {
+                                if let (Ok(counter), Ok(sum_val)) = (amp_counter_clone.lock(), amp_sum_clone.lock()) {
+                                    if *counter > 0 {
+                                        let amplitude = *sum_val / *counter as f32;
+                                        let normalized = (amplitude * 5.0).min(1.0);
+                                        
+                                        if let Some(ref handle) = app_handle {
+                                            let _ = handle.emit("audio-amplitude", normalized);
+                                        }
+                                    }
+                                }
+                                *last_time = std::time::Instant::now();
+                                if let Ok(mut c) = amp_counter_clone.lock() { *c = 0; }
+                                if let Ok(mut s) = amp_sum_clone.lock() { *s = 0.0; }
+                            }
                         }
                     },
                     err_fn,
@@ -143,11 +230,17 @@ fn create_input_stream(
                 .map_err(|e| format!("Failed to build input stream: {}", e))?
         }
         cpal::SampleFormat::U16 => {
+            let samples_clone = Arc::clone(&samples);
+            let amp_counter_clone = Arc::clone(&amplitude_counter);
+            let amp_sum_clone = Arc::clone(&amplitude_sum);
+            let last_emit_clone = Arc::clone(&last_emit_time);
+            
             device
                 .build_input_stream(
                     &config.into(),
                     move |data: &[u16], _: &cpal::InputCallbackInfo| {
-                        if let Ok(mut s) = samples.lock() {
+                        // 存储样本
+                        if let Ok(mut s) = samples_clone.lock() {
                             let floats: Vec<f32> = data
                                 .iter()
                                 .map(|&sample| {
@@ -156,6 +249,40 @@ fn create_input_stream(
                                 })
                                 .collect();
                             s.extend(floats);
+                        }
+                        
+                        // 计算音量
+                        let mut sum = 0.0f32;
+                        for &sample in data {
+                            let normalized = (sample as f32 - u16::MAX as f32 / 2.0) 
+                                / (u16::MAX as f32 / 2.0);
+                            sum += normalized.abs();
+                        }
+                        let avg = sum / data.len() as f32;
+                        
+                        if let Ok(mut counter) = amp_counter_clone.lock() {
+                            *counter += data.len() as u64;
+                        }
+                        if let Ok(mut sum_val) = amp_sum_clone.lock() {
+                            *sum_val += avg * data.len() as f32;
+                        }
+                        
+                        if let Ok(mut last_time) = last_emit_clone.lock() {
+                            if last_time.elapsed().as_millis() >= 50 {
+                                if let (Ok(counter), Ok(sum_val)) = (amp_counter_clone.lock(), amp_sum_clone.lock()) {
+                                    if *counter > 0 {
+                                        let amplitude = *sum_val / *counter as f32;
+                                        let normalized = (amplitude * 5.0).min(1.0);
+                                        
+                                        if let Some(ref handle) = app_handle {
+                                            let _ = handle.emit("audio-amplitude", normalized);
+                                        }
+                                    }
+                                }
+                                *last_time = std::time::Instant::now();
+                                if let Ok(mut c) = amp_counter_clone.lock() { *c = 0; }
+                                if let Ok(mut s) = amp_sum_clone.lock() { *s = 0.0; }
+                            }
                         }
                     },
                     err_fn,

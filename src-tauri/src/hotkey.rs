@@ -250,11 +250,11 @@ fn start_recording(app: &AppHandle) {
         }
     }
 
-    // Start recording
+    // Start recording with app_handle for amplitude monitoring
     let result = {
         let recorder = recorder_state.recorder.lock().unwrap();
         if let Some(ref rec) = *recorder {
-            rec.start_recording()
+            rec.start_recording(Some(app.clone()))
         } else {
             Err("Recorder not initialized".to_string())
         }

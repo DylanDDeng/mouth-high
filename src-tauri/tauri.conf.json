@@ -26,8 +26,8 @@
       {
         "title": "Recording",
         "label": "recording-bar",
-        "width": 220,
-        "height": 56,
+        "width": 200,
+        "height": 52,
         "visible": false,
         "resizable": false,
         "fullscreen": false,
@@ -35,7 +35,9 @@
         "alwaysOnTop": true,
         "transparent": true,
         "skipTaskbar": true,
-        "center": true
+        "center": true,
+        "hiddenTitle": true,
+        "acceptFirstMouse": true
       }
     ],
     "security": {
