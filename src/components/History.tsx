@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { 
   Clock, Trash2, Copy, Shield, 
   ChevronDown, X, ArrowLeft, Search, Calendar
@@ -38,6 +39,20 @@ function HistoryPage({ onBack }: HistoryPageProps) {
   useEffect(() => {
     loadHistory();
     loadRetention();
+
+    // 监听新的转录事件，实时刷新历史记录
+    const setupListener = async () => {
+      const unlisten = await listen("transcript", () => {
+        loadHistory();
+      });
+      return unlisten;
+    };
+
+    const unlistenPromise = setupListener();
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
   }, []);
 
   const loadHistory = async () => {
