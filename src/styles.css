@@ -2371,70 +2371,130 @@ body {
   }
 }
 
-/* 录音指示器 */
-.recording-indicator {
+/* ========================================
+   录音波纹条 - Typeless 风格
+   ======================================== */
+
+.recording-bar-overlay {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1000;
-  cursor: pointer;
-  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 60px;
+  background: transparent;
+  animation: fadeIn 0.2s ease;
+  pointer-events: none;
 }
 
-.recording-indicator-inner {
+.recording-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
-  color: white;
+  background: rgba(30, 30, 30, 0.95);
   border-radius: 50px;
-  box-shadow: 0 4px 16px rgba(255, 68, 68, 0.35);
-  font-weight: 500;
-  font-size: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 300px;
+  animation: slideUp 0.3s ease;
 }
 
-.recording-indicator:hover .recording-indicator-inner {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 68, 68, 0.45);
-}
-
-.recording-dot {
-  width: 10px;
-  height: 10px;
-  background: white;
+.recording-bar-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 68, 68, 0.9);
   border-radius: 50%;
-  animation: pulse 1.5s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  animation: micPulse 1.5s infinite;
 }
 
-.recording-stop-icon {
-  margin-left: 4px;
-  opacity: 0.9;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
+@keyframes micPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
   }
   50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(255, 68, 68, 0);
   }
 }
 
-@keyframes slideIn {
+/* 波形容器 */
+.waveform-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 40px;
+  flex: 1;
+  padding: 0 8px;
+}
+
+.waveform-bar {
+  width: 4px;
+  background: linear-gradient(to top, #4a9eff, #6bb3ff);
+  border-radius: 2px;
+  transition: height 0.05s ease;
+  min-height: 4px;
+  max-height: 100%;
+}
+
+/* 停止按钮 */
+.recording-stop-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.recording-stop-btn:hover {
+  background: rgba(255, 68, 68, 0.9);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* 提示文字 */
+.recording-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+/* 动画 */
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateX(20px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

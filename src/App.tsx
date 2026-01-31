@@ -5,7 +5,8 @@ import Status from "./components/Status";
 import Settings from "./components/Settings";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
-import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles, StopCircle } from "lucide-react";
+import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import RecordingBar from "./components/RecordingBar";
 
 type AppStatus = "idle" | "recording" | "processing";
 type NavItem = "home" | "history" | "dictionary" | "settings";
@@ -299,13 +300,7 @@ function App() {
 
       {/* 录音指示器（Toggle 模式下显示） */}
       {status === "recording" && recordingMode === "toggle" && (
-        <div className="recording-indicator" onClick={handleStopRecording}>
-          <div className="recording-indicator-inner">
-            <span className="recording-dot"></span>
-            <span className="recording-text">正在录音</span>
-            <StopCircle size={20} className="recording-stop-icon" />
-          </div>
-        </div>
+        <RecordingBar onStop={handleStopRecording} />
       )}
 
       {/* 主内容区 */}
