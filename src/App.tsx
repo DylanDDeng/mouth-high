@@ -70,6 +70,11 @@ function App() {
         setHotkey(event.payload);
       });
 
+      // 监听录音模式变化
+      const unlistenRecordingMode = await listen<RecordingMode>("recording-mode-changed", (event) => {
+        setRecordingMode(event.payload);
+      });
+
       // 获取初始快捷键配置
       const loadHotkeyConfig = async () => {
         try {
@@ -99,6 +104,7 @@ function App() {
         unlistenTranscript();
         unlistenError();
         unlistenHotkey();
+        unlistenRecordingMode();
       };
     };
 

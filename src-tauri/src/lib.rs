@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use std::fs;
 use serde_json::json;
 use chrono::Local;
+use tauri::Emitter;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, Default)]
 pub struct UsageStats {
@@ -128,10 +129,14 @@ fn get_recording_mode(state: tauri::State<'_, AppState>) -> Result<RecordingMode
 }
 
 #[tauri::command]
-fn set_recording_mode(state: tauri::State<'_, AppState>, mode: RecordingMode) -> Result<(), String> {
+fn set_recording_mode(app_handle: tauri::AppHandle, state: tauri::State<'_, AppState>, mode: RecordingMode) -> Result<(), String> {
     let mut recording_mode = state.recording_mode.lock().map_err(|e| e.to_string())?;
     *recording_mode = mode;
     log::info!("Recording mode set to: {:?}", mode);
+    
+    // 通知前端录音模式已更改
+    let _ = app_handle.emit("recording-mode-changed", mode);
+    
     Ok(())
 }
 
