@@ -218,7 +218,9 @@ fn create_input_stream_with_amplitude(
                                         let normalized = (amplitude * 5.0).min(1.0);
                                         
                                         if let Some(ref handle) = app_handle {
-                                            let _ = handle.emit("audio-amplitude", normalized);
+                                            if let Some(window) = handle.get_webview_window("recording-bar") {
+                                                let _ = window.emit("audio-amplitude", normalized);
+                                            }
                                         }
                                     }
                                 }
@@ -279,7 +281,9 @@ fn create_input_stream_with_amplitude(
                                         let normalized = (amplitude * 5.0).min(1.0);
                                         
                                         if let Some(ref handle) = app_handle {
-                                            let _ = handle.emit("audio-amplitude", normalized);
+                                            if let Some(window) = handle.get_webview_window("recording-bar") {
+                                                let _ = window.emit("audio-amplitude", normalized);
+                                            }
                                         }
                                     }
                                 }

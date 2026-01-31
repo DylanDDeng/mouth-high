@@ -3,7 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { 
   Key, Keyboard, Globe, Check, ChevronRight, 
-  Command, Zap, Star, Info, ArrowLeft, Mic, ToggleLeft, Hand
+  Command, Zap, Star, Info, ArrowLeft, Mic, ToggleLeft
 } from "lucide-react";
 
 interface SettingsPageProps {

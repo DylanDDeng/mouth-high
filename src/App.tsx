@@ -147,15 +147,6 @@ function App() {
     }
   };
 
-  // 停止录音（用于 Toggle 模式）
-  const handleStopRecording = async () => {
-    try {
-      await invoke("stop_recording");
-    } catch (error) {
-      console.error("Failed to stop recording:", error);
-    }
-  };
-
   const navItems: { id: NavItem; label: string; icon: React.ReactNode }[] = [
     { id: "home", label: "首页", icon: <Mic size={18} /> },
     { id: "history", label: "历史记录", icon: <Clock size={18} /> },

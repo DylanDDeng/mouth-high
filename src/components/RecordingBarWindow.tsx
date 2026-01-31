@@ -1,23 +1,70 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { X, Check } from "lucide-react";
 
 function RecordingBarWindow() {
-  const [waveform, setWaveform] = useState<number[]>(new Array(20).fill(0.3));
-  const animationRef = useRef<number | null>(null);
-  const amplitudeRef = useRef(0.3);
-  const targetAmplitudeRef = useRef(0.3);
+  const BAR_COUNT = 20;
+  const [waveform, setWaveform] = useState<number[]>(new Array(BAR_COUNT).fill(0.12));
+  const amplitudeRef = useRef(0.0);
+  const lastAmplitudeRef = useRef(0.0);
+  const phaseRef = useRef(0.0);
+  const lastTimeRef = useRef(performance.now());
 
   // 监听真实音频振幅数据
   useEffect(() => {
-    console.log("RecordingBarWindow mounted, setting up amplitude listener");
-    
+    const currentWebview = getCurrentWebviewWindow();
+
     const setupListener = async () => {
-      const unlisten = await listen<number>("audio-amplitude", (event) => {
-        console.log("Received audio amplitude:", event.payload);
-        targetAmplitudeRef.current = event.payload;
+      // Note: backend emits from `WebviewWindow`, so we must listen on `WebviewWindow`.
+      const unlisten = await currentWebview.listen<number>("audio-amplitude", (event) => {
+        const raw = typeof event.payload === "number" ? event.payload : Number(event.payload);
+        const clamped = Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0;
+
+        // Smooth amplitude to avoid jitter; keep "small sounds" visible with a non-linear curve.
+        amplitudeRef.current += (clamped - amplitudeRef.current) * 0.25;
+        const visualAmp = Math.min(1, Math.sqrt(amplitudeRef.current) * 1.25);
+
+        // Drive a moving waveform even when amplitude is steady.
+        const now = performance.now();
+        const dt = now - lastTimeRef.current;
+        lastTimeRef.current = now;
+
+        const delta = Math.abs(clamped - lastAmplitudeRef.current);
+        lastAmplitudeRef.current = clamped;
+
+        // Faster motion when amplitude changes rapidly (speech tends to be "busier").
+        const speed = 0.08 + delta * 0.9 + visualAmp * 0.12;
+        phaseRef.current += (dt / 16.6667) * speed;
+
+        setWaveform((prev) => {
+          const t = phaseRef.current;
+          const next = new Array<number>(BAR_COUNT);
+
+          for (let i = 0; i < BAR_COUNT; i++) {
+            // Center bars a bit taller, like typical voice indicators.
+            const x = (i - (BAR_COUNT - 1) / 2) / ((BAR_COUNT - 1) / 2); // [-1, 1]
+            const envelope = Math.exp(-x * x * 1.2);
+
+            // Two layered sines gives a "wave" feel without flickery randomness.
+            const wave =
+              Math.sin(t * 1.1 + i * 0.55) * 0.35 +
+              Math.sin(t * 1.9 - i * 0.25) * 0.2;
+
+            // Keep a tiny breathing motion so it never looks like a frozen picture.
+            const idle = Math.sin(t * 0.7 + i * 0.4) * 0.03 * envelope;
+
+            const base = 0.10 + envelope * (0.10 + visualAmp * 0.78);
+            let target = base + envelope * wave * (0.12 + visualAmp * 0.25) + idle;
+
+            target = Math.max(0.1, Math.min(1.0, target));
+            next[i] = prev[i] * 0.6 + target * 0.4;
+          }
+
+          return next;
+        });
       });
+
       return unlisten;
     };
 
@@ -25,41 +72,6 @@ function RecordingBarWindow() {
 
     return () => {
       unlistenPromise.then((fn) => fn());
-    };
-  }, []);
-
-  // 波形动画 - 使用真实音频数据
-  useEffect(() => {
-    const animate = () => {
-      // 平滑过渡当前振幅到目标振幅
-      amplitudeRef.current += (targetAmplitudeRef.current - amplitudeRef.current) * 0.3;
-      
-      setWaveform((prev) => {
-        const newWaveform = [...prev];
-        for (let i = 0; i < newWaveform.length; i++) {
-          // 根据实际振幅生成波形，添加一些随机性模拟真实音频
-          const baseHeight = 0.15 + amplitudeRef.current * 0.75;
-          const randomVariation = (Math.random() - 0.5) * 0.3 * amplitudeRef.current;
-          const noise = Math.sin(Date.now() / 100 + i * 0.5) * 0.1 * amplitudeRef.current;
-          
-          let newHeight = baseHeight + randomVariation + noise;
-          newHeight = Math.max(0.1, Math.min(1.0, newHeight));
-          
-          // 平滑过渡
-          newWaveform[i] = newWaveform[i] * 0.6 + newHeight * 0.4;
-        }
-        return newWaveform;
-      });
-      
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
     };
   }, []);
 
