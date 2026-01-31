@@ -6,7 +6,6 @@ import Settings from "./components/Settings";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
 import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles } from "lucide-react";
-import RecordingBar from "./components/RecordingBar";
 
 type AppStatus = "idle" | "recording" | "processing";
 type NavItem = "home" | "history" | "dictionary" | "settings";
@@ -304,12 +303,7 @@ function App() {
         </div>
       </aside>
 
-      {/* 录音指示器（Toggle 模式下显示） */}
-      {status === "recording" && recordingMode === "toggle" && (
-        <RecordingBar onStop={handleStopRecording} />
-      )}
-
-      {/* 主内容区 */}
+      {/* 主内容区 -->
       <main className="main-content">
         {activeNav === "settings" ? renderSettings() :
          activeNav === "history" ? renderHistory() :

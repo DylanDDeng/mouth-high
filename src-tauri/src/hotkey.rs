@@ -268,10 +268,19 @@ fn start_recording(app: &AppHandle) {
                 *is_recording = true;
             }
 
-            // 显示窗口并置顶（用于 Toggle 模式显示录音波纹条）
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.set_always_on_top(true);
+            // 获取录音模式
+            let recording_mode = {
+                let mode = *state.recording_mode.lock().unwrap();
+                mode
+            };
+
+            // Toggle 模式下显示浮动波纹条窗口
+            if recording_mode == crate::RecordingMode::Toggle {
+                if let Some(window) = app.get_webview_window("recording-bar") {
+                    let _ = window.center();
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
             }
 
             let _ = app.emit("recording-started", ());
@@ -320,9 +329,9 @@ fn stop_recording_and_process(app: &AppHandle) {
         *is_recording = false;
     }
 
-    // 取消窗口置顶
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.set_always_on_top(false);
+    // 隐藏浮动波纹条窗口
+    if let Some(window) = app.get_webview_window("recording-bar") {
+        let _ = window.hide();
     }
 
     // Process audio if we have it

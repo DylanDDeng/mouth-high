@@ -14,12 +14,27 @@
     "windows": [
       {
         "title": "Mouth High",
+        "label": "main",
         "width": 720,
         "height": 480,
         "resizable": true,
         "minWidth": 600,
         "minHeight": 400,
         "fullscreen": false,
+        "center": true
+      },
+      {
+        "title": "Recording",
+        "label": "recording-bar",
+        "width": 400,
+        "height": 80,
+        "visible": false,
+        "resizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "skipTaskbar": true,
         "center": true
       }
     ],
