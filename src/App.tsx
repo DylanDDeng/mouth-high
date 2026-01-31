@@ -303,7 +303,7 @@ function App() {
         </div>
       </aside>
 
-      {/* 主内容区 -->
+      {/* 主内容区 */}
       <main className="main-content">
         {activeNav === "settings" ? renderSettings() :
          activeNav === "history" ? renderHistory() :
