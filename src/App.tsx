@@ -1,0 +1,290 @@
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import Status from "./components/Status";
+import Settings from "./components/Settings";
+import SettingsPage from "./components/SettingsPage";
+import HistoryPage from "./components/History";
+import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles } from "lucide-react";
+
+type AppStatus = "idle" | "recording" | "processing";
+type NavItem = "home" | "history" | "dictionary" | "settings";
+
+interface TranscriptEvent {
+  text: string;
+  language?: string;
+}
+
+interface UsageStats {
+  today_characters: number;
+  total_characters: number;
+  total_transcriptions: number;
+}
+
+interface HotkeyConfig {
+  modifiers: string[];
+  key: string;
+}
+
+function App() {
+  const [status, setStatus] = useState<AppStatus>("idle");
+  const [transcript, setTranscript] = useState<string>("");
+  const [outputMode, setOutputMode] = useState<"keyboard" | "clipboard">("keyboard");
+  const [activeNav, setActiveNav] = useState<NavItem>("home");
+  const [stats, setStats] = useState<UsageStats>({
+    today_characters: 0,
+    total_characters: 0,
+    total_transcriptions: 0,
+  });
+  const [hotkey, setHotkey] = useState<string>("Ctrl + Shift + R");
+
+  useEffect(() => {
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+
+    const setupListeners = async () => {
+      const unlistenRecording = await listen("recording-started", () => {
+        setStatus("recording");
+      });
+
+      const unlistenProcessing = await listen("processing-started", () => {
+        setStatus("processing");
+      });
+
+      const unlistenTranscript = await listen<TranscriptEvent>("transcript", (event) => {
+        setStatus("idle");
+        setTranscript(event.payload.text);
+        // Refresh stats after transcription
+        fetchStats();
+      });
+
+      const unlistenError = await listen<string>("error", (event) => {
+        setStatus("idle");
+        console.error("Error:", event.payload);
+      });
+
+      const unlistenHotkey = await listen<string>("hotkey-registered", (event) => {
+        setHotkey(event.payload);
+      });
+
+      // 获取初始快捷键配置
+      const loadHotkeyConfig = async () => {
+        try {
+          const config = await invoke<HotkeyConfig>("get_hotkey_config");
+          setHotkey(formatHotkey(config, isMac));
+        } catch (e) {
+          console.error("Failed to load hotkey config:", e);
+        }
+      };
+
+      loadHotkeyConfig();
+
+      return () => {
+        unlistenRecording();
+        unlistenProcessing();
+        unlistenTranscript();
+        unlistenError();
+        unlistenHotkey();
+      };
+    };
+
+    setupListeners();
+    fetchStats();
+  }, []);
+
+  const formatHotkey = (config: HotkeyConfig, mac: boolean): string => {
+    const parts = [];
+    for (const m of config.modifiers) {
+      if (mac) {
+        parts.push(
+          m === "ctrl" ? "⌃" :
+          m === "shift" ? "⇧" :
+          m === "alt" ? "⌥" :
+          m === "cmd" ? "⌘" : m
+        );
+      } else {
+        parts.push(m.charAt(0).toUpperCase() + m.slice(1));
+      }
+    }
+    parts.push(config.key.toUpperCase());
+    return parts.join(" + ");
+  };
+
+  const fetchStats = async () => {
+    try {
+      const result = await invoke<UsageStats>("get_usage_stats");
+      setStats(result);
+    } catch (e) {
+      console.error("Failed to fetch stats:", e);
+    }
+  };
+
+  const handleOutputModeChange = async (mode: "keyboard" | "clipboard") => {
+    setOutputMode(mode);
+    try {
+      await invoke("set_output_mode", { mode });
+    } catch (error) {
+      console.error("Failed to set output mode:", error);
+    }
+  };
+
+  const navItems: { id: NavItem; label: string; icon: React.ReactNode }[] = [
+    { id: "home", label: "首页", icon: <Mic size={18} /> },
+    { id: "history", label: "历史记录", icon: <Clock size={18} /> },
+    { id: "dictionary", label: "词典", icon: <BookOpen size={18} /> },
+    { id: "settings", label: "设置", icon: <SettingsIcon size={18} /> },
+  ];
+
+  // 渲染首页内容
+  const renderHome = () => (
+    <>
+      {/* 顶部标题区 */}
+      <header className="content-header">
+        <div className="header-text">
+          <h1>自然说话，完美写作</h1>
+          <p className="header-desc">
+            按住 <kbd>{hotkey}</kbd> 说话，松开后自动将语音转换为文字
+          </p>
+        </div>
+      </header>
+
+      {/* 统计卡片区域 */}
+      <section className="stats-section">
+        <div className="stat-card primary">
+          <div className="stat-header">
+            <div className="stat-icon">
+              <Mic size={20} />
+            </div>
+            <div className="stat-main-value">{stats.total_transcriptions}</div>
+          </div>
+          <div className="stat-label">总转录次数</div>
+          <button className="view-report-btn">查看报告</button>
+          <div className="privacy-note">
+            <span className="lock-icon">🔒</span>
+            <span>您的数据保持私密</span>
+          </div>
+        </div>
+
+        <div className="stat-grid">
+          <div className="stat-card small">
+            <div className="stat-header">
+              <Clock size={18} className="stat-icon-sm" />
+              <span className="stat-value">{stats.today_characters.toLocaleString()}</span>
+            </div>
+            <div className="stat-label">今日字符数</div>
+          </div>
+
+          <div className="stat-card small">
+            <div className="stat-header">
+              <BookOpen size={18} className="stat-icon-sm" />
+              <span className="stat-value">{stats.total_characters.toLocaleString()}</span>
+            </div>
+            <div className="stat-label">累计字符数</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 主要内容区 */}
+      <section className="content-body">
+        <div className="panel panel-main">
+          <Status status={status} transcript={transcript} hotkey={hotkey} />
+        </div>
+        <div className="panel panel-side">
+          <Settings 
+            outputMode={outputMode} 
+            onOutputModeChange={handleOutputModeChange}
+          />
+        </div>
+      </section>
+
+      {/* 底部版本信息 */}
+      <footer className="content-footer">
+        <span>Version v0.9.3</span>
+        <a href="#" className="check-update">检查更新</a>
+      </footer>
+    </>
+  );
+
+  // 渲染设置页面
+  const renderSettings = () => (
+    <SettingsPage onBack={() => setActiveNav("home")} />
+  );
+
+  // 渲染历史记录页面
+  const renderHistory = () => (
+    <HistoryPage onBack={() => setActiveNav("home")} />
+  );
+
+  return (
+    <div className="app-container">
+      {/* 左侧边栏 */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo">
+            <div className="logo-icon">
+              <Mic size={20} />
+            </div>
+            <span className="logo-text">Mouth High</span>
+          </div>
+          <span className="pro-badge">Pro Trial</span>
+        </div>
+
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-item ${activeNav === item.id ? "active" : ""}`}
+              onClick={() => setActiveNav(item.id)}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="trial-card">
+            <div className="trial-title">Pro Trial</div>
+            <div className="trial-progress">
+              <div className="trial-text">26 of 30 days used</div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: "86%" }} />
+              </div>
+            </div>
+            <p className="trial-desc">Upgrade to Mouth High Pro before your trial ends</p>
+            <button className="upgrade-btn">Upgrade</button>
+          </div>
+        </div>
+
+        <div className="sidebar-bottom">
+          <button className="icon-btn" title="用户">
+            <span className="avatar">U</span>
+          </button>
+          <button className="icon-btn" title="消息">
+            <Sparkles size={16} />
+          </button>
+          <button className="icon-btn" title="设置" onClick={() => setActiveNav("settings")}>
+            <SettingsIcon size={16} />
+          </button>
+          <button className="icon-btn" title="帮助">
+            <span>?</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* 主内容区 */}
+      <main className="main-content">
+        {activeNav === "settings" ? renderSettings() :
+         activeNav === "history" ? renderHistory() :
+         activeNav === "dictionary" ? (
+           <div className="placeholder-page">
+             <h1>词典功能</h1>
+             <p>即将推出...</p>
+             <button onClick={() => setActiveNav("home")}>返回首页</button>
+           </div>
+         ) : renderHome()}
+      </main>
+    </div>
+  );
+}
+
+export default App;
