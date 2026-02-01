@@ -153,10 +153,16 @@ function SettingsPage({ onBack }: SettingsPageProps) {
             <Keyboard size={18} />
             <span>快捷键</span>
           </div>
-          <HotkeyRecorder 
-            currentHotkey={hotkeyDisplay} 
-            onHotkeyChange={setHotkeyDisplay}
-          />
+          
+          <div className="setting-row-v2">
+            <div className="setting-info-v2">
+              <span className="setting-label-v2">开始录音</span>
+            </div>
+            <HotkeyRecorder 
+              currentHotkey={hotkeyDisplay} 
+              onHotkeyChange={setHotkeyDisplay}
+            />
+          </div>
         </section>
 
         {/* 录音模式 */}

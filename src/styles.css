@@ -3566,3 +3566,110 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 紧凑版快捷键记录器 */
+.hotkey-recorder-compact {
+  display: flex;
+  align-items: center;
+}
+
+.hotkey-recorder-compact .current-hotkey-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #fafafa;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hotkey-recorder-compact .current-hotkey-row:hover {
+  border-color: #d0d0d0;
+  background: #f5f5f5;
+}
+
+.hotkey-recorder-compact .hotkey-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hotkey-recorder-compact .key-badge-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.hotkey-recorder-compact .action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hotkey-recorder-compact .action-btn:hover {
+  background: #ebebeb;
+  color: #666;
+}
+
+.hotkey-recorder-compact .captured-keys-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hotkey-recorder-compact .recording-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #fafafa;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.hotkey-recorder-compact .recording-hint {
+  font-size: 13px;
+  color: #666;
+}
+
+.hotkey-recorder-compact .recorder-error-compact {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #ef4444;
+  white-space: nowrap;
+}
+
+.hotkey-recorder-compact .recorder-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+/* 确保 setting-row-v2 中的 recorder 定位正确 */
+.setting-row-v2 .hotkey-recorder-compact {
+  position: relative;
+}

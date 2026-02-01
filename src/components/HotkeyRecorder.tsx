@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { X, Check, Mic } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 interface HotkeyRecorderProps {
   currentHotkey: string;
@@ -127,18 +127,7 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
   };
 
   return (
-    <div className="hotkey-recorder-section">
-      {/* 标题行 */}
-      <div className="recorder-title-row">
-        <Mic size={18} />
-        <span>开始录音</span>
-      </div>
-      
-      {/* 描述 */}
-      <p className="recorder-desc">按住快捷键开始说话，松开后自动识别</p>
-
-      {/* 快捷键显示/编辑区 */}
-      <div className="recorder-display-area">
+    <div className="hotkey-recorder-compact">
         {isRecording && captured ? (
           // 录制中 - 显示新捕获的键
           <div className="captured-keys-row">
@@ -181,15 +170,9 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
             </button>
           </div>
         )}
-      </div>
 
       {/* 错误提示 */}
-      {error && <p className="recorder-error-new">{error}</p>}
-
-      {/* 底部提示 */}
-      {!isRecording && (
-        <p className="recorder-tip">点击上方快捷键可修改</p>
-      )}
+      {error && <p className="recorder-error-compact">{error}</p>}
     </div>
   );
 }
