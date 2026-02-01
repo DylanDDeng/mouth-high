@@ -151,7 +151,6 @@ function App() {
     { id: "home", label: "首页", icon: <Mic size={18} /> },
     { id: "history", label: "历史记录", icon: <Clock size={18} /> },
     { id: "dictionary", label: "词典", icon: <BookOpen size={18} /> },
-    { id: "settings", label: "设置", icon: <SettingsIcon size={18} /> },
   ];
 
   // 渲染首页内容
