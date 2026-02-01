@@ -3619,6 +3619,8 @@ body {
   justify-content: center;
   width: 24px;
   height: 24px;
+  padding: 0;
+  gap: 0;
   border: none;
   background: transparent;
   border-radius: 4px;
@@ -3630,6 +3632,27 @@ body {
 .hotkey-recorder-compact .action-btn:hover {
   background: #ebebeb;
   color: #666;
+}
+
+/* 编辑按钮特殊样式 - 使用深色背景确保可见 */
+.hotkey-recorder-compact .action-btn.edit {
+  background: #333 !important;
+  color: white !important;
+  border: none;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  border-radius: 6px;
+}
+
+.hotkey-recorder-compact .action-btn.edit:hover {
+  background: #1a1a1a !important;
+  color: white !important;
+  transform: scale(1.05);
+}
+
+.hotkey-recorder-compact .action-btn.edit svg {
+  display: block;
 }
 
 .hotkey-recorder-compact .captured-keys-row {

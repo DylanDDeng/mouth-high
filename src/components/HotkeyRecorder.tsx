@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { X, Check } from "lucide-react";
+import { X, Check, Pencil } from "lucide-react";
 
 interface HotkeyRecorderProps {
   currentHotkey: string;
@@ -165,8 +165,8 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
                 <kbd key={i} className="key-badge-new">{key}</kbd>
               ))}
             </div>
-            <button className="action-btn cancel" onClick={(e) => { e.stopPropagation(); startRecording(); }}>
-              <X size={16} />
+            <button className="action-btn edit" onClick={(e) => { e.stopPropagation(); startRecording(); }} title="修改快捷键">
+              <Pencil size={14} color="white" />
             </button>
           </div>
         )}
