@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import Status from "./components/Status";
-import Settings from "./components/Settings";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
 import { Mic, Clock, BookOpen, Settings as SettingsIcon } from "lucide-react";
@@ -31,7 +30,6 @@ type RecordingMode = "hold" | "toggle";
 function App() {
   const [status, setStatus] = useState<AppStatus>("idle");
   const [transcript, setTranscript] = useState<string>("");
-  const [outputMode, setOutputMode] = useState<"keyboard" | "clipboard">("keyboard");
   const [activeNav, setActiveNav] = useState<NavItem>("home");
   const [stats, setStats] = useState<UsageStats>({
     today_characters: 0,
@@ -138,15 +136,6 @@ function App() {
     }
   };
 
-  const handleOutputModeChange = async (mode: "keyboard" | "clipboard") => {
-    setOutputMode(mode);
-    try {
-      await invoke("set_output_mode", { mode });
-    } catch (error) {
-      console.error("Failed to set output mode:", error);
-    }
-  };
-
   const navItems: { id: NavItem; label: string; icon: React.ReactNode }[] = [
     { id: "home", label: "首页", icon: <Mic size={18} /> },
     { id: "history", label: "历史记录", icon: <Clock size={18} /> },
@@ -207,14 +196,8 @@ function App() {
 
       {/* 主要内容区 */}
       <section className="content-body">
-        <div className="panel panel-main">
+        <div className="panel panel-main" style={{ flex: 1 }}>
           <Status status={status} transcript={transcript} hotkey={hotkey} />
-        </div>
-        <div className="panel panel-side">
-          <Settings 
-            outputMode={outputMode} 
-            onOutputModeChange={handleOutputModeChange}
-          />
         </div>
       </section>
 
