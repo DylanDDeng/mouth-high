@@ -159,6 +159,8 @@ pub fn setup_hotkey(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 // 使用配置注册快捷键
 fn register_hotkey_with_config(app: &AppHandle, config: &HotkeyConfig) -> Result<(), String> {
     let (shortcut, name) = config_to_shortcut(config)?;
+    
+    log::info!("Registering shortcut: {:?}, name: {}", shortcut, name);
 
     // 保存当前快捷键到状态
     {
@@ -168,10 +170,25 @@ fn register_hotkey_with_config(app: &AppHandle, config: &HotkeyConfig) -> Result
     }
 
     let handle = app.clone();
+    let shortcut_for_handler = shortcut.clone();
 
     // on_shortcut() 同时完成：注册快捷键 + 绑定处理器
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
+            // 检查当前注册的快捷键是否匹配
+            let current = handle.state::<CurrentShortcut>();
+            let current_shortcut = current.shortcut.lock().unwrap();
+            
+            if let Some(ref registered) = *current_shortcut {
+                if registered != &shortcut_for_handler {
+                    log::warn!("Stale handler triggered! Expected: {:?}, Got: {:?}", registered, shortcut_for_handler);
+                    return;
+                }
+            } else {
+                log::warn!("Handler triggered but no shortcut registered");
+                return;
+            }
+            
             let recording_mode = {
                 let state = handle.state::<crate::AppState>();
                 let mode = *state.recording_mode.lock().unwrap();
@@ -221,19 +238,35 @@ fn register_hotkey_with_config(app: &AppHandle, config: &HotkeyConfig) -> Result
 
 // 更新快捷键（供前端调用）
 pub fn update_hotkey(app: &AppHandle, config: &HotkeyConfig) -> Result<(), String> {
+    log::info!("Updating hotkey to: {:?}", config);
+    
+    // 先获取并清空当前快捷键状态
+    {
+        let current = app.state::<CurrentShortcut>();
+        let mut current_shortcut = current.shortcut.lock().map_err(|e| e.to_string())?;
+        if let Some(ref shortcut) = *current_shortcut {
+            log::info!("Unregistering previous shortcut: {:?}", shortcut);
+        }
+        *current_shortcut = None;
+    }
+    
     // 注销所有快捷键和处理器
-    let _ = app.global_shortcut().unregister_all();
+    match app.global_shortcut().unregister_all() {
+        Ok(_) => log::info!("Successfully unregistered all shortcuts"),
+        Err(e) => log::warn!("Failed to unregister shortcuts: {:?}", e),
+    }
 
-    // 延迟确保系统释放
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    // 增加延迟确保系统完全释放快捷键
+    std::thread::sleep(std::time::Duration::from_millis(300));
 
     // 重新注册
+    log::info!("Registering new shortcut...");
     register_hotkey_with_config(app, config)?;
 
     // 保存配置
     crate::set_hotkey_config(config.clone())?;
 
-    log::info!("Hotkey updated to: {}", config.to_display_string());
+    log::info!("Hotkey successfully updated to: {}", config.to_display_string());
     Ok(())
 }
 
