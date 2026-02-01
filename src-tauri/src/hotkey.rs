@@ -409,6 +409,18 @@ fn process_audio(app: &AppHandle, audio_path: std::path::PathBuf) {
                 log::warn!("Failed to add history item: {}", e);
             }
 
+            // 获取录音模式，如果是 Toggle 模式，再次确保焦点正确
+            let recording_mode = *state.recording_mode.lock().unwrap();
+            if recording_mode == crate::RecordingMode::Toggle {
+                // 再次恢复焦点到之前的应用（ASR 处理期间焦点可能改变）
+                let prev = state.previous_app.lock().unwrap();
+                if let Some(ref bundle_id) = *prev {
+                    log::info!("Re-restoring focus to: {}", bundle_id);
+                    let _ = crate::focus::activate_app(bundle_id);
+                    std::thread::sleep(std::time::Duration::from_millis(150));
+                }
+            }
+
             // Output the text
             let output_mode = {
                 let mode = state.output_mode.lock().unwrap();

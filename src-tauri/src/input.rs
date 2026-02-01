@@ -12,13 +12,13 @@ pub fn output_text(text: &str, mode: OutputMode) -> Result<(), String> {
 }
 
 fn simulate_keyboard_input(text: &str) -> Result<(), String> {
-    // 增加延迟确保焦点已正确恢复
-    thread::sleep(Duration::from_millis(300));
+    // 已经通过 focus::activate_app 恢复了焦点，只需要短暂等待系统响应
+    thread::sleep(Duration::from_millis(100));
     
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to create Enigo instance: {}", e))?;
 
-    // 再次延迟确保 Enigo 准备好
+    // 短暂等待 Enigo 准备好
     thread::sleep(Duration::from_millis(50));
 
     // Type the text
