@@ -2502,8 +2502,6 @@ body {
 
 .settings-page-new {
   padding: 24px 32px;
-  max-width: 600px;
-  margin: 0 auto;
   min-height: 100vh;
   background: var(--color-bg, #faf8f5);
 }
@@ -2583,17 +2581,18 @@ body {
 
 /* 快捷键预设 */
 .preset-list-new {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .preset-btn-new {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 12px 20px;
   border: 1.5px solid var(--color-border, #e8e4de);
   background: white;
   border-radius: 10px;
