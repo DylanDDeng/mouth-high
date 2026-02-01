@@ -2498,3 +2498,406 @@ body {
     transform: translateY(0);
   }
 }
+/* 新设置页面样式 - 简洁单列布局 */
+
+.settings-page-new {
+  padding: 24px 32px;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--color-bg, #faf8f5);
+}
+
+/* 头部 */
+.settings-header-new {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.settings-header-new h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.back-btn-new {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn-new:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+/* 内容区 */
+.settings-content-new {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 设置卡片 */
+.setting-card-new {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.setting-header-new {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.setting-header-new h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.setting-header-new svg {
+  color: var(--color-accent, #8b7355);
+}
+
+.setting-desc-new {
+  font-size: 13px;
+  color: var(--color-text-tertiary, #999);
+  margin-top: 2px;
+  margin-left: 28px;
+  margin-bottom: 16px;
+}
+
+/* 快捷键预设 */
+.preset-list-new {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.preset-btn-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  background: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-btn-new:hover {
+  border-color: var(--color-accent, #8b7355);
+  color: var(--color-accent, #8b7355);
+}
+
+.preset-btn-new.active {
+  background: var(--color-accent, #8b7355);
+  border-color: var(--color-accent, #8b7355);
+  color: white;
+}
+
+.preset-btn-new svg {
+  opacity: 0.7;
+}
+
+.preset-btn-new.active svg {
+  opacity: 1;
+}
+
+.check-icon {
+  margin-left: 4px;
+}
+
+.current-hotkey-new {
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+  padding: 10px 14px;
+  background: var(--color-bg, #faf8f5);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-hotkey-new kbd {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+  background: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e8e4de);
+}
+
+/* 选项列表 */
+.option-list-new {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-btn-new {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-btn-new:hover {
+  border-color: var(--color-accent-light, #a68b6a);
+  background: rgba(139, 115, 85, 0.02);
+}
+
+.option-btn-new.active {
+  border-color: var(--color-accent, #8b7355);
+  background: rgba(139, 115, 85, 0.06);
+}
+
+.option-btn-new svg {
+  color: var(--color-accent, #8b7355);
+}
+
+.option-info-new {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.option-name-new {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.option-desc-new {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #999);
+}
+
+/* 保留期限选择 */
+.retention-select-new {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.retention-btn-new {
+  padding: 8px 16px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retention-btn-new:hover {
+  border-color: var(--color-accent-light, #a68b6a);
+}
+
+.retention-btn-new.active {
+  background: var(--color-accent, #8b7355);
+  border-color: var(--color-accent, #8b7355);
+  color: white;
+}
+
+/* API 设置 */
+.api-display-new {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.api-status-new {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--color-text-secondary, #666);
+}
+
+.api-status-new svg {
+  color: var(--color-accent, #8b7355);
+}
+
+.status-check {
+  color: var(--color-success, #22c55e);
+}
+
+.api-action-btn-new {
+  padding: 8px 16px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.api-action-btn-new:hover {
+  border-color: var(--color-accent, #8b7355);
+  color: var(--color-accent, #8b7355);
+}
+
+.api-input-new {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.api-input-new input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  border-radius: 10px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.api-input-new input:focus {
+  border-color: var(--color-accent, #8b7355);
+}
+
+.api-actions-new {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-secondary-new {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-new:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary-new {
+  padding: 10px 16px;
+  border: none;
+  background: var(--color-accent, #8b7355);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-new:hover:not(:disabled) {
+  background: var(--color-accent-hover, #7a6549);
+}
+
+.btn-primary-new:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .settings-page-new {
+    background: #1a1a1a;
+  }
+  
+  .setting-card-new {
+    background: #252525;
+  }
+  
+  .setting-header-new h2 {
+    color: #f0f0f0;
+  }
+  
+  .preset-btn-new {
+    background: #252525;
+    border-color: #333;
+    color: #aaa;
+  }
+  
+  .preset-btn-new:hover {
+    border-color: var(--color-accent, #a68b6a);
+  }
+  
+  .option-btn-new {
+    background: #252525;
+    border-color: #333;
+  }
+  
+  .option-btn-new:hover {
+    background: rgba(166, 139, 106, 0.08);
+  }
+  
+  .option-name-new {
+    color: #f0f0f0;
+  }
+  
+  .retention-btn-new {
+    background: #252525;
+    border-color: #333;
+    color: #aaa;
+  }
+  
+  .api-action-btn-new {
+    background: #252525;
+    border-color: #333;
+    color: #aaa;
+  }
+  
+  .api-input-new input {
+    background: #252525;
+    border-color: #333;
+    color: #f0f0f0;
+  }
+  
+  .current-hotkey-new {
+    background: #252525;
+  }
+  
+  .current-hotkey-new kbd {
+    background: #1a1a1a;
+    border-color: #333;
+    color: #f0f0f0;
+  }
+  
+  .btn-secondary-new:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
