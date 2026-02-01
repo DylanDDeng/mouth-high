@@ -3133,7 +3133,8 @@ body {
 
 .settings-page-v2 {
   padding: 24px 32px;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   background: #ffffff;
 }
 
