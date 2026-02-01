@@ -248,7 +248,6 @@ function App() {
             </div>
             <span className="logo-text">Mouth High</span>
           </div>
-          <span className="pro-badge">Pro Trial</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -263,20 +262,6 @@ function App() {
             </button>
           ))}
         </nav>
-
-        <div className="sidebar-footer">
-          <div className="trial-card">
-            <div className="trial-title">Pro Trial</div>
-            <div className="trial-progress">
-              <div className="trial-text">26 of 30 days used</div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: "86%" }} />
-              </div>
-            </div>
-            <p className="trial-desc">Upgrade to Mouth High Pro before your trial ends</p>
-            <button className="upgrade-btn">Upgrade</button>
-          </div>
-        </div>
 
         <div className="sidebar-bottom">
           <button className="icon-btn" title="用户">
