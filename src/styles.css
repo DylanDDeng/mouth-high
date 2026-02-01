@@ -2738,12 +2738,28 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  color: var(--color-text-secondary, #666);
 }
 
 .api-status-new svg {
   color: var(--color-accent, #8b7355);
+  flex-shrink: 0;
+}
+
+.api-info-new {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.api-info-new span:first-child {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.api-model-new {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #999);
 }
 
 .status-check {
@@ -2878,6 +2894,14 @@ body {
     background: #252525;
     border-color: #333;
     color: #aaa;
+  }
+  
+  .api-info-new span:first-child {
+    color: #f0f0f0;
+  }
+  
+  .api-model-new {
+    color: #888;
   }
   
   .api-input-new input {

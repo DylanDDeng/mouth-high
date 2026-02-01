@@ -271,7 +271,10 @@ function SettingsPage({ onBack }: SettingsPageProps) {
             <div className="api-display-new">
               <div className="api-status-new">
                 <Globe size={16} />
-                <span>DashScope API</span>
+                <div className="api-info-new">
+                  <span>DashScope API</span>
+                  <span className="api-model-new">通义千问 3.0 ASR</span>
+                </div>
                 {apiKeyConfigured && <Check size={14} className="status-check" />}
               </div>
               <button className="api-action-btn-new" onClick={() => setShowApiInput(true)}>
