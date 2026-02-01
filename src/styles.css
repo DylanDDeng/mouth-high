@@ -2924,3 +2924,208 @@ body {
     background: rgba(255, 255, 255, 0.1);
   }
 }
+
+/* HotkeyRecorder 组件样式 */
+.hotkey-recorder {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.recorder-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.recorder-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.recorder-header svg {
+  color: var(--color-accent, #8b7355);
+}
+
+.recorder-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recorder-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px;
+  background: var(--color-bg, #faf8f5);
+  border-radius: 12px;
+}
+
+.recorder-info {
+  flex: 1;
+}
+
+.recorder-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.recorder-title svg {
+  color: var(--color-accent, #8b7355);
+}
+
+.recorder-desc {
+  font-size: 13px;
+  color: var(--color-text-tertiary, #999);
+}
+
+.recorder-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.current-hotkey {
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+  background: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border, #e8e4de);
+  min-width: 100px;
+  text-align: center;
+}
+
+.captured-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.key-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: var(--color-accent, #8b7355);
+  border-radius: 8px;
+  border: none;
+}
+
+.cancel-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.recorder-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  background: var(--color-accent, #8b7355);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+  background: var(--color-accent-hover, #7a6549);
+}
+
+.record-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px dashed var(--color-border, #e8e4de);
+  background: transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.record-btn:hover {
+  border-color: var(--color-accent, #8b7355);
+  color: var(--color-accent, #8b7355);
+  background: rgba(139, 115, 85, 0.02);
+}
+
+.recorder-error {
+  font-size: 13px;
+  color: #ef4444;
+  padding: 10px;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 8px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .hotkey-recorder {
+    background: #252525;
+  }
+  
+  .recorder-main {
+    background: #1a1a1a;
+  }
+  
+  .recorder-title {
+    color: #f0f0f0;
+  }
+  
+  .current-hotkey {
+    background: #252525;
+    border-color: #333;
+    color: #f0f0f0;
+  }
+  
+  .record-btn {
+    border-color: #333;
+    color: #aaa;
+  }
+  
+  .record-btn:hover {
+    border-color: var(--color-accent, #a68b6a);
+    color: var(--color-accent, #a68b6a);
+  }
+}

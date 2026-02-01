@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { 
-  ArrowLeft, Check, Keyboard, Mic, Globe, 
-  ToggleLeft, Zap, Command, Star, Key, Clock
+  ArrowLeft, Check, Mic, Globe, 
+  ToggleLeft, Key, Clock
 } from "lucide-react";
+import HotkeyRecorder from "./HotkeyRecorder";
 
 interface SettingsPageProps {
   onBack?: () => void;
@@ -18,13 +19,6 @@ type RecordingMode = "hold" | "toggle";
 type OutputMode = "keyboard" | "clipboard";
 type HistoryRetention = "7days" | "30days" | "90days" | "forever";
 
-const PRESETS = [
-  { name: "Cmd + R", modifiers: ["cmd"], key: "r", icon: Command },
-  { name: "Ctrl + R", modifiers: ["ctrl"], key: "r", icon: Zap },
-  { name: "F5", modifiers: [], key: "f5", icon: Star },
-  { name: "F8", modifiers: [], key: "f8", icon: Star },
-];
-
 const RETENTION_OPTIONS = [
   { value: "7days", label: "7 天" },
   { value: "30days", label: "30 天" },
@@ -33,18 +27,18 @@ const RETENTION_OPTIONS = [
 ];
 
 function SettingsPage({ onBack }: SettingsPageProps) {
-  const [hotkeyConfig, setHotkeyConfig] = useState<HotkeyConfig>({ modifiers: ["cmd"], key: "r" });
+  const [hotkeyDisplay, setHotkeyDisplay] = useState("⌘ + R");
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("hold");
   const [outputMode, setOutputMode] = useState<OutputMode>("keyboard");
   const [retention, setRetention] = useState<HistoryRetention>("forever");
   const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
   const [showApiInput, setShowApiInput] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [isMac, setIsMac] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const isMac = navigator.platform.toLowerCase().includes("mac");
+
   useEffect(() => {
-    setIsMac(navigator.platform.toLowerCase().includes("mac"));
     loadSettings();
   }, []);
 
@@ -57,23 +51,27 @@ function SettingsPage({ onBack }: SettingsPageProps) {
         invoke<HistoryRetention>("get_history_retention"),
         invoke<boolean>("is_api_key_configured"),
       ]);
-      setHotkeyConfig(config);
+      
+      // 格式化当前快捷键显示
+      const mods = config.modifiers.map(m => {
+        if (!isMac) return m.charAt(0).toUpperCase() + m.slice(1);
+        switch (m) {
+          case "cmd": return "⌘";
+          case "ctrl": return "⌃";
+          case "shift": return "⇧";
+          case "alt": return "⌥";
+          default: return m;
+        }
+      });
+      const key = config.key.toUpperCase();
+      setHotkeyDisplay([...mods, key].join(" + "));
+      
       setRecordingMode(recMode);
       setOutputMode(outMode);
       setRetention(ret);
       setApiKeyConfigured(apiConfigured);
     } catch (e) {
       console.error("Failed to load settings:", e);
-    }
-  };
-
-  const handleHotkeyChange = async (preset: typeof PRESETS[0]) => {
-    const newConfig = { modifiers: preset.modifiers, key: preset.key };
-    setHotkeyConfig(newConfig);
-    try {
-      await invoke("update_hotkey", { config: newConfig });
-    } catch (e) {
-      console.error("Failed to update hotkey:", e);
     }
   };
 
@@ -119,20 +117,6 @@ function SettingsPage({ onBack }: SettingsPageProps) {
     }
   };
 
-  const formatHotkey = (config: HotkeyConfig) => {
-    if (config.modifiers.length === 0) return config.key.toUpperCase();
-    const mods = config.modifiers.map(m => {
-      if (!isMac) return m.charAt(0).toUpperCase() + m.slice(1);
-      return m === "cmd" ? "⌘" : m === "ctrl" ? "⌃" : m === "shift" ? "⇧" : m === "alt" ? "⌥" : m;
-    });
-    return [...mods, config.key.toUpperCase()].join(" + ");
-  };
-
-  const isActivePreset = (preset: typeof PRESETS[0]) => {
-    return hotkeyConfig.key === preset.key && 
-      JSON.stringify([...hotkeyConfig.modifiers].sort()) === JSON.stringify([...preset.modifiers].sort());
-  };
-
   return (
     <div className="settings-page-new">
       {/* 头部 */}
@@ -146,37 +130,11 @@ function SettingsPage({ onBack }: SettingsPageProps) {
       </header>
 
       <div className="settings-content-new">
-        {/* 快捷键设置 */}
-        <section className="setting-card-new">
-          <div className="setting-header-new">
-            <Keyboard size={18} />
-            <h2>快捷键</h2>
-          </div>
-          <p className="setting-desc-new">选择语音输入的触发方式</p>
-          
-          <div className="preset-list-new">
-            {PRESETS.map((preset) => {
-              const Icon = preset.icon;
-              const active = isActivePreset(preset);
-              return (
-                <button
-                  key={preset.name}
-                  className={`preset-btn-new ${active ? "active" : ""}`}
-                  onClick={() => handleHotkeyChange(preset)}
-                >
-                  <Icon size={16} />
-                  <span>{isMac && preset.name.includes("Cmd") ? preset.name : 
-                         !isMac && preset.name.includes("Cmd") ? "Ctrl + R" : preset.name}</span>
-                  {active && <Check size={14} className="check-icon" />}
-                </button>
-              );
-            })}
-          </div>
-          
-          <div className="current-hotkey-new">
-            当前: <kbd>{formatHotkey(hotkeyConfig)}</kbd>
-          </div>
-        </section>
+        {/* 快捷键设置 - 新设计 */}
+        <HotkeyRecorder 
+          currentHotkey={hotkeyDisplay} 
+          onHotkeyChange={setHotkeyDisplay}
+        />
 
         {/* 录音模式 */}
         <section className="setting-card-new">
