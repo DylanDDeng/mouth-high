@@ -17,10 +17,10 @@
   --color-text-tertiary: #999999;
   --color-text-muted: #b3b3b3;
   
-  /* 强调色 */
-  --color-accent: #8b7355;
-  --color-accent-light: #a68b6a;
-  --color-accent-hover: #7a6549;
+  /* 强调色 - 深灰 */
+  --color-accent: #333333;
+  --color-accent-light: #555555;
+  --color-accent-hover: #1a1a1a;
   
   /* 功能色 */
   --color-success: #22c55e;
@@ -2347,9 +2347,9 @@ body {
     --color-text-tertiary: #808080;
     --color-text-muted: #666666;
     
-    --color-accent: #a68b6a;
-    --color-accent-light: #b89b7a;
-    --color-accent-hover: #8f7656;
+    --color-accent: #e5e5e5;
+    --color-accent-light: #f0f0f0;
+    --color-accent-hover: #ffffff;
   }
   
   .nav-item.active {
