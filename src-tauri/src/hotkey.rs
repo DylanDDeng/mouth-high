@@ -342,22 +342,31 @@ fn stop_recording_and_process(app: &AppHandle) {
         mode
     };
 
-    // Toggle 模式下，先恢复焦点到之前的应用
+    // Toggle 模式下：先隐藏录音条窗口，再恢复焦点
     if recording_mode == crate::RecordingMode::Toggle {
+        // 1. 先隐藏录音条窗口（避免它干扰焦点）
+        if let Some(window) = app.get_webview_window("recording-bar") {
+            let _ = window.hide();
+        }
+        
+        // 2. 给系统时间处理隐藏窗口
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        
+        // 3. 恢复焦点到之前的应用
         let prev = state.previous_app.lock().unwrap();
         if let Some(ref bundle_id) = *prev {
             log::info!("Restoring focus to: {}", bundle_id);
             if let Err(e) = crate::focus::activate_app(bundle_id) {
                 log::warn!("Failed to restore focus: {}", e);
             }
-            // 给系统时间完成焦点切换
-            std::thread::sleep(std::time::Duration::from_millis(150));
+            // 给系统更多时间完成焦点切换
+            std::thread::sleep(std::time::Duration::from_millis(200));
         }
-    }
-
-    // 隐藏浮动波纹条窗口
-    if let Some(window) = app.get_webview_window("recording-bar") {
-        let _ = window.hide();
+    } else {
+        // Hold 模式下只需隐藏窗口
+        if let Some(window) = app.get_webview_window("recording-bar") {
+            let _ = window.hide();
+        }
     }
 
     // Process audio if we have it
