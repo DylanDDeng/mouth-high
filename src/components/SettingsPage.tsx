@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { 
   ArrowLeft, Check, Mic, Globe, 
-  ToggleLeft, Key, Clock
+  ToggleLeft, Key, Clock, ChevronDown, Keyboard
 } from "lucide-react";
 import HotkeyRecorder from "./HotkeyRecorder";
 
@@ -26,6 +26,16 @@ const RETENTION_OPTIONS = [
   { value: "forever", label: "永久" },
 ];
 
+const RECORDING_MODE_LABELS: Record<RecordingMode, string> = {
+  hold: "按住模式",
+  toggle: "切换模式",
+};
+
+const OUTPUT_MODE_LABELS: Record<OutputMode, string> = {
+  keyboard: "键盘输入",
+  clipboard: "剪贴板",
+};
+
 function SettingsPage({ onBack }: SettingsPageProps) {
   const [hotkeyDisplay, setHotkeyDisplay] = useState("⌘ + R");
   const [recordingMode, setRecordingMode] = useState<RecordingMode>("hold");
@@ -35,6 +45,11 @@ function SettingsPage({ onBack }: SettingsPageProps) {
   const [showApiInput, setShowApiInput] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
+  
+  // 下拉菜单显示状态
+  const [showModeDropdown, setShowModeDropdown] = useState(false);
+  const [showOutputDropdown, setShowOutputDropdown] = useState(false);
+  const [showRetentionDropdown, setShowRetentionDropdown] = useState(false);
 
   const isMac = navigator.platform.toLowerCase().includes("mac");
 
@@ -52,7 +67,6 @@ function SettingsPage({ onBack }: SettingsPageProps) {
         invoke<boolean>("is_api_key_configured"),
       ]);
       
-      // 格式化当前快捷键显示
       const mods = config.modifiers.map(m => {
         if (!isMac) return m.charAt(0).toUpperCase() + m.slice(1);
         switch (m) {
@@ -77,6 +91,7 @@ function SettingsPage({ onBack }: SettingsPageProps) {
 
   const handleRecordingModeChange = async (mode: RecordingMode) => {
     setRecordingMode(mode);
+    setShowModeDropdown(false);
     try {
       await invoke("set_recording_mode", { mode });
     } catch (e) {
@@ -86,6 +101,7 @@ function SettingsPage({ onBack }: SettingsPageProps) {
 
   const handleOutputModeChange = async (mode: OutputMode) => {
     setOutputMode(mode);
+    setShowOutputDropdown(false);
     try {
       await invoke("set_output_mode", { mode });
     } catch (e) {
@@ -95,6 +111,7 @@ function SettingsPage({ onBack }: SettingsPageProps) {
 
   const handleRetentionChange = async (newRetention: HistoryRetention) => {
     setRetention(newRetention);
+    setShowRetentionDropdown(false);
     try {
       await invoke("set_history_retention", { retention: newRetention });
     } catch (e) {
@@ -118,141 +135,199 @@ function SettingsPage({ onBack }: SettingsPageProps) {
   };
 
   return (
-    <div className="settings-page-new">
+    <div className="settings-page-v2">
       {/* 头部 */}
-      <header className="settings-header-new">
+      <header className="settings-header-v2">
         {onBack && (
-          <button className="back-btn-new" onClick={onBack}>
+          <button className="back-btn-v2" onClick={onBack}>
             <ArrowLeft size={20} />
           </button>
         )}
         <h1>设置</h1>
       </header>
 
-      <div className="settings-content-new">
-        {/* 快捷键设置 - 新设计 */}
-        <HotkeyRecorder 
-          currentHotkey={hotkeyDisplay} 
-          onHotkeyChange={setHotkeyDisplay}
-        />
+      <div className="settings-content-v2">
+        {/* 快捷键设置 */}
+        <section className="setting-section-v2">
+          <div className="section-title-v2">
+            <Keyboard size={18} />
+            <span>快捷键</span>
+          </div>
+          <HotkeyRecorder 
+            currentHotkey={hotkeyDisplay} 
+            onHotkeyChange={setHotkeyDisplay}
+          />
+        </section>
 
         {/* 录音模式 */}
-        <section className="setting-card-new">
-          <div className="setting-header-new">
+        <section className="setting-section-v2">
+          <div className="section-title-v2">
             <ToggleLeft size={18} />
-            <h2>录音模式</h2>
+            <span>录音模式</span>
           </div>
           
-          <div className="option-list-new">
-            <button 
-              className={`option-btn-new ${recordingMode === "hold" ? "active" : ""}`}
-              onClick={() => handleRecordingModeChange("hold")}
-            >
-              <div className="option-info-new">
-                <span className="option-name-new">按住模式</span>
-                <span className="option-desc-new">按住快捷键录音，松开自动停止</span>
-              </div>
-              {recordingMode === "hold" && <Check size={16} />}
-            </button>
-            <button 
-              className={`option-btn-new ${recordingMode === "toggle" ? "active" : ""}`}
-              onClick={() => handleRecordingModeChange("toggle")}
-            >
-              <div className="option-info-new">
-                <span className="option-name-new">切换模式</span>
-                <span className="option-desc-new">按一下开始，再按一下或点击指示器停止</span>
-              </div>
-              {recordingMode === "toggle" && <Check size={16} />}
-            </button>
+          <div className="setting-row-v2">
+            <div className="setting-info-v2">
+              <span className="setting-label-v2">当前模式</span>
+            </div>
+            <div className="dropdown-wrapper-v2">
+              <button 
+                className="dropdown-trigger-v2"
+                onClick={() => setShowModeDropdown(!showModeDropdown)}
+              >
+                <span>{RECORDING_MODE_LABELS[recordingMode]}</span>
+                <ChevronDown size={16} className={showModeDropdown ? "open" : ""} />
+              </button>
+              
+              {showModeDropdown && (
+                <div className="dropdown-menu-v2">
+                  <button 
+                    className={`dropdown-item-v2 ${recordingMode === "hold" ? "active" : ""}`}
+                    onClick={() => handleRecordingModeChange("hold")}
+                  >
+                    <div className="item-info-v2">
+                      <span className="item-name-v2">按住模式</span>
+                      <span className="item-desc-v2">按住快捷键录音，松开自动停止</span>
+                    </div>
+                    {recordingMode === "hold" && <Check size={16} />}
+                  </button>
+                  <button 
+                    className={`dropdown-item-v2 ${recordingMode === "toggle" ? "active" : ""}`}
+                    onClick={() => handleRecordingModeChange("toggle")}
+                  >
+                    <div className="item-info-v2">
+                      <span className="item-name-v2">切换模式</span>
+                      <span className="item-desc-v2">按一下开始，再按一下停止</span>
+                    </div>
+                    {recordingMode === "toggle" && <Check size={16} />}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         {/* 输出方式 */}
-        <section className="setting-card-new">
-          <div className="setting-header-new">
+        <section className="setting-section-v2">
+          <div className="section-title-v2">
             <Mic size={18} />
-            <h2>输出方式</h2>
+            <span>输出方式</span>
           </div>
           
-          <div className="option-list-new">
-            <button 
-              className={`option-btn-new ${outputMode === "keyboard" ? "active" : ""}`}
-              onClick={() => handleOutputModeChange("keyboard")}
-            >
-              <div className="option-info-new">
-                <span className="option-name-new">键盘输入</span>
-                <span className="option-desc-new">直接输出到当前光标位置</span>
-              </div>
-              {outputMode === "keyboard" && <Check size={16} />}
-            </button>
-            <button 
-              className={`option-btn-new ${outputMode === "clipboard" ? "active" : ""}`}
-              onClick={() => handleOutputModeChange("clipboard")}
-            >
-              <div className="option-info-new">
-                <span className="option-name-new">剪贴板</span>
-                <span className="option-desc-new">复制到剪贴板并粘贴</span>
-              </div>
-              {outputMode === "clipboard" && <Check size={16} />}
-            </button>
+          <div className="setting-row-v2">
+            <div className="setting-info-v2">
+              <span className="setting-label-v2">当前输出</span>
+            </div>
+            <div className="dropdown-wrapper-v2">
+              <button 
+                className="dropdown-trigger-v2"
+                onClick={() => setShowOutputDropdown(!showOutputDropdown)}
+              >
+                <span>{OUTPUT_MODE_LABELS[outputMode]}</span>
+                <ChevronDown size={16} className={showOutputDropdown ? "open" : ""} />
+              </button>
+              
+              {showOutputDropdown && (
+                <div className="dropdown-menu-v2">
+                  <button 
+                    className={`dropdown-item-v2 ${outputMode === "keyboard" ? "active" : ""}`}
+                    onClick={() => handleOutputModeChange("keyboard")}
+                  >
+                    <div className="item-info-v2">
+                      <span className="item-name-v2">键盘输入</span>
+                      <span className="item-desc-v2">直接输出到当前光标位置</span>
+                    </div>
+                    {outputMode === "keyboard" && <Check size={16} />}
+                  </button>
+                  <button 
+                    className={`dropdown-item-v2 ${outputMode === "clipboard" ? "active" : ""}`}
+                    onClick={() => handleOutputModeChange("clipboard")}
+                  >
+                    <div className="item-info-v2">
+                      <span className="item-name-v2">剪贴板</span>
+                      <span className="item-desc-v2">复制到剪贴板并粘贴</span>
+                    </div>
+                    {outputMode === "clipboard" && <Check size={16} />}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         {/* 历史记录保留 */}
-        <section className="setting-card-new">
-          <div className="setting-header-new">
+        <section className="setting-section-v2">
+          <div className="section-title-v2">
             <Clock size={18} />
-            <h2>历史记录保留</h2>
+            <span>历史记录保留</span>
           </div>
           
-          <div className="retention-select-new">
-            {RETENTION_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                className={`retention-btn-new ${retention === opt.value ? "active" : ""}`}
-                onClick={() => handleRetentionChange(opt.value as HistoryRetention)}
+          <div className="setting-row-v2">
+            <div className="setting-info-v2">
+              <span className="setting-label-v2">保留时间</span>
+            </div>
+            <div className="dropdown-wrapper-v2">
+              <button 
+                className="dropdown-trigger-v2"
+                onClick={() => setShowRetentionDropdown(!showRetentionDropdown)}
               >
-                {opt.label}
+                <span>{RETENTION_OPTIONS.find(o => o.value === retention)?.label}</span>
+                <ChevronDown size={16} className={showRetentionDropdown ? "open" : ""} />
               </button>
-            ))}
+              
+              {showRetentionDropdown && (
+                <div className="dropdown-menu-v2 retention-menu-v2">
+                  {RETENTION_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      className={`dropdown-item-v2 ${retention === opt.value ? "active" : ""}`}
+                      onClick={() => handleRetentionChange(opt.value as HistoryRetention)}
+                    >
+                      <span className="item-name-v2">{opt.label}</span>
+                      {retention === opt.value && <Check size={16} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         {/* API 设置 */}
-        <section className="setting-card-new">
-          <div className="setting-header-new">
+        <section className="setting-section-v2">
+          <div className="section-title-v2">
             <Key size={18} />
-            <h2>API 设置</h2>
+            <span>API 设置</span>
           </div>
           
           {!showApiInput ? (
-            <div className="api-display-new">
-              <div className="api-status-new">
+            <div className="api-row-v2">
+              <div className="api-info-v2">
                 <Globe size={16} />
-                <div className="api-info-new">
-                  <span>DashScope API</span>
-                  <span className="api-model-new">通义千问 3.0 ASR</span>
+                <div className="api-text-v2">
+                  <span className="api-name-v2">DashScope API</span>
+                  <span className="api-model-v2">通义千问 3.0 ASR</span>
                 </div>
-                {apiKeyConfigured && <Check size={14} className="status-check" />}
+                {apiKeyConfigured && <Check size={16} className="api-check-v2" />}
               </div>
-              <button className="api-action-btn-new" onClick={() => setShowApiInput(true)}>
+              <button className="api-edit-btn-v2" onClick={() => setShowApiInput(true)}>
                 {apiKeyConfigured ? "修改" : "配置"}
               </button>
             </div>
           ) : (
-            <div className="api-input-new">
+            <div className="api-input-v2">
               <input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="输入 DashScope API Key"
               />
-              <div className="api-actions-new">
-                <button className="btn-secondary-new" onClick={() => setShowApiInput(false)}>
+              <div className="api-actions-v2">
+                <button className="btn-secondary-v2" onClick={() => setShowApiInput(false)}>
                   取消
                 </button>
                 <button 
-                  className="btn-primary-new" 
+                  className="btn-primary-v2" 
                   onClick={handleSaveApiKey}
                   disabled={!apiKey.trim() || saving}
                 >

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Keyboard, X, Check, Mic } from "lucide-react";
+import { X, Check, Mic } from "lucide-react";
 
 interface HotkeyRecorderProps {
   currentHotkey: string;
@@ -16,13 +16,11 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
   const [isRecording, setIsRecording] = useState(false);
   const [captured, setCaptured] = useState<CapturedKey | null>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const isMac = navigator.platform.toLowerCase().includes("mac");
 
   const formatKey = (key: string) => {
     if (key.length === 1) return key.toUpperCase();
-    // 处理功能键
     return key.replace(/^f(\d+)$/i, "F$1");
   };
 
@@ -66,7 +64,6 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
     } else if (key.length === 1) {
       key = key.toLowerCase();
     } else {
-      // 忽略其他特殊键
       return;
     }
 
@@ -84,7 +81,6 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
     setIsRecording(true);
     setCaptured(null);
     setError("");
-    setSuccess(false);
   };
 
   const cancelRecording = () => {
@@ -96,13 +92,11 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
   const saveHotkey = async () => {
     if (!captured) return;
 
-    // 验证至少有一个修饰键（避免纯字母键）
     if (captured.modifiers.length === 0) {
       setError("请至少按住一个修饰键（如 Cmd、Ctrl、Shift）");
       return;
     }
 
-    // Space 键检查
     if (captured.key === "space") {
       setError("Space 键可能被系统限制，建议使用字母键");
       return;
@@ -118,79 +112,84 @@ function HotkeyRecorder({ currentHotkey, onHotkeyChange }: HotkeyRecorderProps) 
       
       onHotkeyChange(formatDisplay(captured));
       setIsRecording(false);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2000);
     } catch (e: any) {
       let errorMsg = "设置失败";
       if (typeof e === "string" && e.includes("RegisterEventHotKey")) {
-        errorMsg = "该快捷键已被系统占用，请尝试其他组合";
+        errorMsg = "该快捷键已被系统占用";
       }
       setError(errorMsg);
     }
   };
 
+  // 解析当前快捷键显示为徽章
+  const parseHotkey = (hotkey: string) => {
+    return hotkey.split(" + ").filter(Boolean);
+  };
+
   return (
-    <div className="hotkey-recorder">
-      <div className="recorder-header">
-        <Keyboard size={18} />
-        <h3>快捷键</h3>
+    <div className="hotkey-recorder-section">
+      {/* 标题行 */}
+      <div className="recorder-title-row">
+        <Mic size={18} />
+        <span>开始录音</span>
       </div>
+      
+      {/* 描述 */}
+      <p className="recorder-desc">按住快捷键开始说话，松开后自动识别</p>
 
-      <div className="recorder-content">
-        <div className="recorder-main">
-          <div className="recorder-info">
-            <div className="recorder-title">
-              <Mic size={16} />
-              <span>开始录音</span>
-            </div>
-            <p className="recorder-desc">
-              {isRecording 
-                ? "请在键盘上按下想要的组合键..." 
-                : "按住快捷键开始说话，松开后自动识别"}
-            </p>
-          </div>
-
-          <div className="recorder-display">
-            {isRecording && captured ? (
-              <div className="captured-keys">
-                {captured.modifiers.map((mod, i) => (
-                  <kbd key={i} className="key-badge">
-                    {isMac 
-                      ? mod === "cmd" ? "⌘" : mod === "ctrl" ? "⌃" : mod === "shift" ? "⇧" : "⌥"
-                      : mod.charAt(0).toUpperCase() + mod.slice(1)}
-                  </kbd>
-                ))}
-                <kbd className="key-badge">{formatKey(captured.key)}</kbd>
-              </div>
-            ) : (
-              <div className="current-hotkey">{currentHotkey}</div>
-            )}
-
-            {isRecording && (
-              <button className="cancel-btn" onClick={cancelRecording} title="取消">
-                <X size={18} />
+      {/* 快捷键显示/编辑区 */}
+      <div className="recorder-display-area">
+        {isRecording && captured ? (
+          // 录制中 - 显示新捕获的键
+          <div className="captured-keys-row">
+            {captured.modifiers.map((mod, i) => (
+              <kbd key={i} className="key-badge-new">
+                {isMac 
+                  ? mod === "cmd" ? "⌘" : mod === "ctrl" ? "⌃" : mod === "shift" ? "⇧" : "⌥"
+                  : mod.charAt(0).toUpperCase() + mod.slice(1)}
+              </kbd>
+            ))}
+            <kbd className="key-badge-new">{formatKey(captured.key)}</kbd>
+            
+            <div className="recorder-actions-inline">
+              <button className="action-btn cancel" onClick={cancelRecording}>
+                <X size={16} />
               </button>
-            )}
+              <button className="action-btn confirm" onClick={saveHotkey}>
+                <Check size={16} />
+              </button>
+            </div>
           </div>
-        </div>
-
-        {isRecording && captured && (
-          <div className="recorder-actions">
-            <button className="save-btn" onClick={saveHotkey}>
-              <Check size={16} />
-              确认保存
+        ) : isRecording ? (
+          // 录制中等待输入
+          <div className="recording-placeholder" onClick={cancelRecording}>
+            <span className="recording-hint">请在键盘上按下快捷键...</span>
+            <button className="action-btn cancel">
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          // 正常显示当前快捷键，点击可编辑
+          <div className="current-hotkey-row" onClick={startRecording}>
+            <div className="hotkey-badges">
+              {parseHotkey(currentHotkey).map((key, i) => (
+                <kbd key={i} className="key-badge-new">{key}</kbd>
+              ))}
+            </div>
+            <button className="action-btn cancel" onClick={(e) => { e.stopPropagation(); startRecording(); }}>
+              <X size={16} />
             </button>
           </div>
         )}
-
-        {!isRecording && (
-          <button className="record-btn" onClick={startRecording}>
-            {success ? "已保存 ✓" : "点击记录新快捷键"}
-          </button>
-        )}
-
-        {error && <p className="recorder-error">{error}</p>}
       </div>
+
+      {/* 错误提示 */}
+      {error && <p className="recorder-error-new">{error}</p>}
+
+      {/* 底部提示 */}
+      {!isRecording && (
+        <p className="recorder-tip">点击上方快捷键可修改</p>
+      )}
     </div>
   );
 }
