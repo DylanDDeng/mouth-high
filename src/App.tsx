@@ -5,7 +5,7 @@ import Status from "./components/Status";
 import Settings from "./components/Settings";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
-import { Mic, Clock, BookOpen, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { Mic, Clock, BookOpen, Settings as SettingsIcon } from "lucide-react";
 
 type AppStatus = "idle" | "recording" | "processing";
 type NavItem = "home" | "history" | "dictionary" | "settings";
@@ -266,9 +266,6 @@ function App() {
         <div className="sidebar-bottom">
           <button className="icon-btn" title="用户">
             <span className="avatar">U</span>
-          </button>
-          <button className="icon-btn" title="消息">
-            <Sparkles size={16} />
           </button>
           <button className="icon-btn" title="设置" onClick={() => setActiveNav("settings")}>
             <SettingsIcon size={16} />
