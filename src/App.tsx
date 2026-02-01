@@ -201,11 +201,6 @@ function App() {
         </div>
       </section>
 
-      {/* 底部版本信息 */}
-      <footer className="content-footer">
-        <span>Version v0.9.3</span>
-        <a href="#" className="check-update">检查更新</a>
-      </footer>
     </>
   );
 
