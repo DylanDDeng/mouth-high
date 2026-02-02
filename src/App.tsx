@@ -197,7 +197,7 @@ function App() {
       {/* 主要内容区 */}
       <section className="content-body">
         <div className="panel panel-main" style={{ flex: 1 }}>
-          <Status status={status} transcript={transcript} hotkey={hotkey} />
+          <Status status={status} transcript={transcript} hotkey={hotkey} onClear={() => setTranscript("")} />
         </div>
       </section>
 

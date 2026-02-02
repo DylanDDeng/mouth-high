@@ -4,9 +4,10 @@ interface StatusProps {
   status: "idle" | "recording" | "processing";
   transcript: string;
   hotkey: string;
+  onClear?: () => void;
 }
 
-function Status({ status, transcript, hotkey }: StatusProps) {
+function Status({ status, transcript, hotkey, onClear }: StatusProps) {
 
   const getStatusConfig = () => {
     switch (status) {
@@ -67,7 +68,7 @@ function Status({ status, transcript, hotkey }: StatusProps) {
           {transcript && (
             <button 
               className="clear-btn"
-              onClick={() => {}}
+              onClick={onClear}
             >
               清空
             </button>
