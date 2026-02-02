@@ -4,7 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import Status from "./components/Status";
 import SettingsPage from "./components/SettingsPage";
 import HistoryPage from "./components/History";
-import { Mic, Clock, BookOpen, Settings as SettingsIcon } from "lucide-react";
+import { Mic, Clock, BookOpen, Settings as SettingsIcon, AudioLines } from "lucide-react";
 
 type AppStatus = "idle" | "recording" | "processing";
 type NavItem = "home" | "history" | "dictionary" | "settings";
@@ -221,7 +221,7 @@ function App() {
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">
-              <Mic size={20} />
+              <AudioLines size={22} />
             </div>
             <span className="logo-text">Mouth High</span>
           </div>
