@@ -241,14 +241,8 @@ function App() {
         </nav>
 
         <div className="sidebar-bottom">
-          <button className="icon-btn" title="用户">
-            <span className="avatar">U</span>
-          </button>
           <button className="icon-btn" title="设置" onClick={() => setActiveNav("settings")}>
             <SettingsIcon size={16} />
-          </button>
-          <button className="icon-btn" title="帮助">
-            <span>?</span>
           </button>
         </div>
       </aside>
