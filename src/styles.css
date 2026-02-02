@@ -1814,7 +1814,8 @@ body {
 
 .setting-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-lg);
   background: white;
@@ -1836,6 +1837,7 @@ body {
 
 .setting-card-content {
   flex: 1;
+  min-width: 0;
 }
 
 .setting-card-content h3 {
