@@ -295,11 +295,20 @@ fn start_recording(app: &AppHandle) {
 
     match result {
         Ok(()) => {
+            // Create a new recording session id. Used to suppress output if user cancels.
+            let session_id = {
+                let mut id = state.recording_session.lock().unwrap();
+                *id = id.saturating_add(1);
+                *id
+            };
+
             // Update state
             {
                 let mut is_recording = state.is_recording.lock().unwrap();
                 *is_recording = true;
             }
+
+            log::info!("Recording started (session {})", session_id);
 
             // 获取录音模式
             let recording_mode = {
@@ -336,6 +345,8 @@ fn start_recording(app: &AppHandle) {
 fn stop_recording_and_process(app: &AppHandle) {
     let state = app.state::<AppState>();
     let recorder_state = app.state::<RecorderState>();
+
+    let session_id = { *state.recording_session.lock().unwrap() };
 
     // Check if recording
     {
@@ -404,18 +415,44 @@ fn stop_recording_and_process(app: &AppHandle) {
 
     // Process audio if we have it
     if let Some(path) = audio_path {
+        // If this session was cancelled, discard and do not transcribe/output.
+        let cancelled = {
+            let cancelled = state.cancelled_sessions.lock().unwrap();
+            cancelled.contains(&session_id)
+        };
+        if cancelled {
+            log::info!("Skip processing cancelled session {}", session_id);
+            if let Err(e) = std::fs::remove_file(&path) {
+                log::warn!("Failed to remove temp audio file: {}", e);
+            }
+            let _ = app.emit("recording-cancelled", ());
+            return;
+        }
+
         let _ = app.emit("processing-started", ());
         log::info!("Processing audio: {:?}", path);
 
         let handle = app.clone();
         std::thread::spawn(move || {
-            process_audio(&handle, path);
+            process_audio(&handle, path, session_id);
         });
     }
 }
 
-fn process_audio(app: &AppHandle, audio_path: std::path::PathBuf) {
+fn process_audio(app: &AppHandle, audio_path: std::path::PathBuf, session_id: u64) {
     let state = app.state::<AppState>();
+
+    // If user cancelled, skip all side-effects (ASR, stats, history, output).
+    {
+        let cancelled = state.cancelled_sessions.lock().unwrap();
+        if cancelled.contains(&session_id) {
+            log::info!("Drop cancelled session {} before ASR", session_id);
+            if let Err(e) = std::fs::remove_file(&audio_path) {
+                log::warn!("Failed to remove temp audio file: {}", e);
+            }
+            return;
+        }
+    }
 
     // Send to sidecar for ASR
     let result = {
@@ -429,6 +466,18 @@ fn process_audio(app: &AppHandle, audio_path: std::path::PathBuf) {
 
     match result {
         Ok(transcript) => {
+            // If user cancelled while ASR was running, drop the result.
+            {
+                let cancelled = state.cancelled_sessions.lock().unwrap();
+                if cancelled.contains(&session_id) {
+                    log::info!("Drop cancelled session {} after ASR", session_id);
+                    if let Err(e) = std::fs::remove_file(&audio_path) {
+                        log::warn!("Failed to remove temp audio file: {}", e);
+                    }
+                    return;
+                }
+            }
+
             log::info!("Transcription: {}", transcript.text);
 
             // Update usage stats
@@ -492,5 +541,113 @@ pub fn stop_recording_manually(app: &AppHandle) -> Result<(), String> {
     }
     
     stop_recording_and_process(app);
+    Ok(())
+}
+
+fn stop_recording_and_discard(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let recorder_state = app.state::<RecorderState>();
+
+    let session_id = { *state.recording_session.lock().unwrap() };
+    {
+        let mut cancelled = state.cancelled_sessions.lock().unwrap();
+        cancelled.insert(session_id);
+    }
+
+    // Check if recording
+    {
+        let is_recording = state.is_recording.lock().unwrap();
+        if !*is_recording {
+            // Not recording can still mean an ASR thread is in-flight (race).
+            // Marking this session as cancelled ensures `process_audio()` will drop results.
+            log::info!("Cancel requested while not recording (session {})", session_id);
+
+            if let Some(window) = app.get_webview_window("recording-bar") {
+                let _ = window.hide();
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(50));
+
+            // Best-effort restore focus to previous app (if available).
+            let prev = state.previous_app.lock().unwrap();
+            if let Some(ref bundle_id) = *prev {
+                let _ = crate::focus::activate_app(bundle_id);
+                std::thread::sleep(std::time::Duration::from_millis(150));
+            }
+
+            let _ = app.emit("recording-cancelled", ());
+            return;
+        }
+    }
+
+    // Stop recording and get audio file path
+    let audio_path = {
+        let recorder = recorder_state.recorder.lock().unwrap();
+        if let Some(ref rec) = *recorder {
+            match rec.stop_recording() {
+                Ok(path) => Some(path),
+                Err(e) => {
+                    log::error!("Failed to stop recording: {}", e);
+                    let _ = app.emit("error", format!("Failed to stop recording: {}", e));
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+
+    // Update state
+    {
+        let mut is_recording = state.is_recording.lock().unwrap();
+        *is_recording = false;
+    }
+
+    // 获取录音模式
+    let recording_mode = {
+        let mode = *state.recording_mode.lock().unwrap();
+        mode
+    };
+
+    // Toggle 模式下：先隐藏录音条窗口，再恢复焦点
+    if recording_mode == crate::RecordingMode::Toggle {
+        // 1. 先隐藏录音条窗口（避免它干扰焦点）
+        if let Some(window) = app.get_webview_window("recording-bar") {
+            let _ = window.hide();
+        }
+
+        // 2. 给系统时间处理隐藏窗口
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // 3. 恢复焦点到之前的应用
+        let prev = state.previous_app.lock().unwrap();
+        if let Some(ref bundle_id) = *prev {
+            log::info!("Restoring focus to: {}", bundle_id);
+            if let Err(e) = crate::focus::activate_app(bundle_id) {
+                log::warn!("Failed to restore focus: {}", e);
+            }
+            std::thread::sleep(std::time::Duration::from_millis(150));
+        }
+    } else {
+        // Hold 模式下只需隐藏窗口
+        if let Some(window) = app.get_webview_window("recording-bar") {
+            let _ = window.hide();
+        }
+    }
+
+    // Clean up audio file (discard)
+    if let Some(path) = audio_path {
+        if let Err(e) = std::fs::remove_file(&path) {
+            log::warn!("Failed to remove temp audio file: {}", e);
+        }
+    }
+
+    let _ = app.emit("recording-cancelled", ());
+    log::info!("Recording cancelled (discarded, session {})", session_id);
+}
+
+// 公共函数：取消录音（供前端调用，不转录/不输出）
+pub fn cancel_recording_manually(app: &AppHandle) -> Result<(), String> {
+    stop_recording_and_discard(app);
     Ok(())
 }

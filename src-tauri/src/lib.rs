@@ -5,6 +5,7 @@ mod input;
 mod sidecar;
 mod tray;
 
+use std::collections::HashSet;
 use std::sync::Mutex;
 use std::path::PathBuf;
 use std::fs;
@@ -78,10 +79,25 @@ impl Default for RecordingMode {
     }
 }
 
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum StopAction {
+    Confirm,
+    Cancel,
+}
+
+impl Default for StopAction {
+    fn default() -> Self {
+        StopAction::Confirm
+    }
+}
+
 pub struct AppState {
     pub output_mode: Mutex<OutputMode>,
     pub is_recording: Mutex<bool>,
     pub recording_mode: Mutex<RecordingMode>,
+    pub recording_session: Mutex<u64>,
+    pub cancelled_sessions: Mutex<HashSet<u64>>,
     pub sidecar_manager: Mutex<Option<sidecar::SidecarManager>>,
     pub previous_app: Mutex<Option<String>>,
 }
@@ -143,8 +159,18 @@ fn set_recording_mode(app_handle: tauri::AppHandle, state: tauri::State<'_, AppS
 }
 
 #[tauri::command]
-fn stop_recording(app_handle: tauri::AppHandle) -> Result<(), String> {
-    hotkey::stop_recording_manually(&app_handle)
+fn stop_recording(app_handle: tauri::AppHandle, action: Option<StopAction>) -> Result<(), String> {
+    let action = action.unwrap_or_default();
+    log::info!("stop_recording called with action: {:?}", action);
+    match action {
+        StopAction::Confirm => hotkey::stop_recording_manually(&app_handle),
+        StopAction::Cancel => hotkey::cancel_recording_manually(&app_handle),
+    }
+}
+
+#[tauri::command]
+fn cancel_recording(app_handle: tauri::AppHandle) -> Result<(), String> {
+    hotkey::cancel_recording_manually(&app_handle)
 }
 
 fn get_config_path() -> PathBuf {
@@ -568,7 +594,9 @@ fn set_history_retention(retention: HistoryRetention) -> Result<(), String> {
 }
 
 pub fn run() {
-    env_logger::init();
+    // Show info logs by default in dev; allow overriding via `RUST_LOG`.
+    // Helps debugging issues like hotkey/cancel flows where users expect logs to appear.
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -577,6 +605,8 @@ pub fn run() {
             output_mode: Mutex::new(OutputMode::default()),
             is_recording: Mutex::new(false),
             recording_mode: Mutex::new(RecordingMode::default()),
+            recording_session: Mutex::new(0),
+            cancelled_sessions: Mutex::new(HashSet::new()),
             sidecar_manager: Mutex::new(None),
             previous_app: Mutex::new(None),
         })
@@ -597,7 +627,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
                 set_output_mode, get_output_mode, 
-                get_recording_mode, set_recording_mode, stop_recording,
+                get_recording_mode, set_recording_mode, stop_recording, cancel_recording,
                 get_api_key, set_api_key, is_api_key_configured, get_usage_stats,
                 get_hotkey_config, set_hotkey_config, update_hotkey,
                 get_history, delete_history_item, clear_history,

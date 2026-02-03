@@ -67,6 +67,10 @@ function App() {
         setHotkey(event.payload);
       });
 
+      const unlistenRecordingCancelled = await listen("recording-cancelled", () => {
+        setStatus("idle");
+      });
+
       // 监听录音模式变化
       const unlistenRecordingMode = await listen<RecordingMode>("recording-mode-changed", (event) => {
         setRecordingMode(event.payload);
@@ -101,6 +105,7 @@ function App() {
         unlistenTranscript();
         unlistenError();
         unlistenHotkey();
+        unlistenRecordingCancelled();
         unlistenRecordingMode();
       };
     };

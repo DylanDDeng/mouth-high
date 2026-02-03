@@ -78,16 +78,17 @@ function RecordingBarWindow() {
   // 取消录音
   const handleCancel = async () => {
     try {
-      await invoke("stop_recording");
+      // Use `stop_recording` with explicit action to avoid command-mismatch issues.
+      await invoke("stop_recording", { action: "cancel" });
     } catch (error) {
-      console.error("Failed to stop recording:", error);
+      console.error("Failed to cancel recording:", error);
     }
   };
 
   // 确认完成
   const handleConfirm = async () => {
     try {
-      await invoke("stop_recording");
+      await invoke("stop_recording", { action: "confirm" });
     } catch (error) {
       console.error("Failed to stop recording:", error);
     }
